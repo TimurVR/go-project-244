@@ -33,13 +33,14 @@ func main() {
 	}
 }
 func Info(){
-	fmt.Println(`NAME:
+	fmt.Print(`NAME:
    gendiff - Compares two configuration files and shows a difference.
 
 USAGE:
    gendiff [global options]
 
 GLOBAL OPTIONS:
+   --format string, -f string  output format (default: "stylish")
    --help, -h                  show help
 `)
 }
