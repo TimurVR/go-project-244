@@ -5,7 +5,7 @@ After completing all the steps in the project, automatic tests will become avail
 The hexlet-check.yml file is responsible for running these tests - do not delete this file, edit it, or rename the repository.
 
 https://asciinema.org/a/cG3iHAIx5d8p8RrTvgA7lTcex
-
+https://asciinema.org/a/L3zLdfEdBLXcbpZTdoD10zcYj
 [![Hexlet Check](https://github.com/TimurVR/go-project-244/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/TimurVR/go-project-244/actions/workflows/hexlet-check.yml)
 [![Go CI](https://github.com/TimurVR/go-project-244/actions/workflows/go.yml/badge.svg)](https://github.com/TimurVR/go-project-244/actions/workflows/go.yml)
 [![CI](https://github.com/TimurVR/go-project-244/actions/workflows/ci.yml/badge.svg)](https://github.com/TimurVR/go-project-244/actions/workflows/ci.yml)
