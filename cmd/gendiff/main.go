@@ -11,13 +11,14 @@ import (
 
 func main() {
 	cmd := &cli.Command{
-		Name:  "gendiff",
-		Usage: "print size of a file or directory",
+		Name:      "gendiff",
+		Usage:     "Compares two configuration files and shows a difference.",
 		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:    "help",
-				Aliases: []string{"h"},
-				Usage:   "show help",
+			&cli.StringFlag{
+				Name:    "format",
+				Aliases: []string{"f"},
+				Value:   "stylish",
+				Usage:   "output format",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
@@ -25,16 +26,15 @@ func main() {
 				Info()
 				return nil
 			}
-			if cmd.NArg() == 0 {
-				return fmt.Errorf("path argument is required")
+			if cmd.NArg() < 2 {
+				return fmt.Errorf("two file paths are required")
 			}
 
 			path1 := cmd.Args().First()
 			path2 := cmd.Args().Get(1)
-			fmt.Println(path1,path2)
-			map1:=code.Parsing(path1)
-			map2:=code.Parsing(path2)
-			fmt.Println(code.GenDiff(map1,map2))
+			map1 := code.Parsing(path1)
+			map2 := code.Parsing(path2)
+			fmt.Println(code.GenDiff(map1, map2))
 			return nil
 		},
 	}
@@ -43,14 +43,16 @@ func main() {
 		log.Fatal(err)
 	}
 }
-func Info(){
+
+func Info() {
 	fmt.Print(`NAME:
    gendiff - Compares two configuration files and shows a difference.
 
 USAGE:
-   gendiff [global options]
+   gendiff [options] <file1> <file2>
 
-GLOBAL OPTIONS:
-   --format string, -f string  output format (default: "stylish")
-   --help, -h                  show help`)
+OPTIONS:
+   --format, -f string  output format (default: "stylish")
+   --help, -h           show help
+`)
 }
