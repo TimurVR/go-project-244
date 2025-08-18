@@ -22,14 +22,12 @@ func main() {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			if cmd.Bool("help") {
-				Info()
-				return nil
+			if cmd.NArg() == 0 {
+				return fmt.Errorf("path argument is required")
 			}
 			if cmd.NArg() < 2 {
 				return fmt.Errorf("two file paths are required")
 			}
-
 			path1 := cmd.Args().First()
 			path2 := cmd.Args().Get(1)
 			map1 := code.Parsing(path1)
@@ -42,17 +40,4 @@ func main() {
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func Info() {
-	fmt.Print(`NAME:
-   gendiff - Compares two configuration files and shows a difference.
-
-USAGE:
-   gendiff [options] <file1> <file2>
-
-OPTIONS:
-   --format, -f string  output format (default: "stylish")
-   --help, -h           show help
-`)
 }
