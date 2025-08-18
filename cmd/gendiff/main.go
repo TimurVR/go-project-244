@@ -1,6 +1,7 @@
 package main
 
 import (
+	"code"
 	"context"
 	"fmt"
 	"log"
@@ -28,9 +29,11 @@ func main() {
 				return fmt.Errorf("path argument is required")
 			}
 
-			path := cmd.Args().First()
+			path1 := cmd.Args().First()
 			path2 := cmd.Args().Get(1)
-			fmt.Println(path,path2)
+			fmt.Println(path1,path2)
+			code.Parsing(path1)
+			code.Parsing(path2)
 			return nil
 		},
 	}
