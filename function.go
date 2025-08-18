@@ -23,7 +23,7 @@ func Parsing(file string)(map[string]interface{}){
 		if err != nil {
 			log.Fatal(err)
 		}
-	case ".yml":
+	default:
 		err = yaml.Unmarshal(data, &data1)
 		if err != nil {
 			log.Fatal(err)
