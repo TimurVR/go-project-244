@@ -24,6 +24,13 @@ func main() {
 				Info()
 				return nil
 			}
+			if cmd.NArg() == 0 {
+				return fmt.Errorf("path argument is required")
+			}
+
+			path := cmd.Args().First()
+			path2 := cmd.Args().Get(1)
+			fmt.Println(path,path2)
 			return nil
 		},
 	}
