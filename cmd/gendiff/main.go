@@ -32,8 +32,9 @@ func main() {
 			path1 := cmd.Args().First()
 			path2 := cmd.Args().Get(1)
 			fmt.Println(path1,path2)
-			code.Parsing(path1)
-			code.Parsing(path2)
+			map1:=code.Parsing(path1)
+			map2:=code.Parsing(path2)
+			fmt.Println(code.GenDiff(map1,map2))
 			return nil
 		},
 	}
