@@ -11,7 +11,7 @@ import (
 
 func main() {
 	cmd := &cli.Command{
-		Name:  "hexlet-path-size",
+		Name:  "gendiff",
 		Usage: "print size of a file or directory",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
@@ -52,6 +52,5 @@ USAGE:
 
 GLOBAL OPTIONS:
    --format string, -f string  output format (default: "stylish")
-   --help, -h                  show help
-`)
+   --help, -h                  show help`)
 }
