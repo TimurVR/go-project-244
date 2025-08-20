@@ -32,7 +32,11 @@ func main() {
 			path2 := cmd.Args().Get(1)
 			map1 := code.Parsing(path1)
 			map2 := code.Parsing(path2)
-			fmt.Println(code.GenDiff(map1, map2))
+			if cmd.String("format")=="stylish"{
+				fmt.Println(code.FormatDiffOutput(code.GenDiff(map1, map2)))
+			}else{
+				fmt.Println(code.GenDiff(map1, map2))
+			}		
 			return nil
 		},
 	}
