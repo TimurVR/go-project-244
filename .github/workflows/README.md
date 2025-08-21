@@ -7,8 +7,10 @@ The hexlet-check.yml file is responsible for running these tests - do not delete
 https://asciinema.org/a/cG3iHAIx5d8p8RrTvgA7lTcex
 https://asciinema.org/a/L3zLdfEdBLXcbpZTdoD10zcYj
 https://asciinema.org/a/1tkAnIr8hrXPaTjPNwozQXawx
+https://asciinema.org/a/ccrl70axUttr1ve6A3oSEdpoO
 [![Hexlet Check](https://github.com/TimurVR/go-project-244/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/TimurVR/go-project-244/actions/workflows/hexlet-check.yml)
 [![Go CI](https://github.com/TimurVR/go-project-244/actions/workflows/go.yml/badge.svg)](https://github.com/TimurVR/go-project-244/actions/workflows/go.yml)
 [![CI](https://github.com/TimurVR/go-project-244/actions/workflows/ci.yml/badge.svg)](https://github.com/TimurVR/go-project-244/actions/workflows/ci.yml)
 [![SonarCloud](https://sonarcloud.io/api/project_badges/measure?project=TimurVR_go-project-244&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=TimurVR_go-project-244)
+[![Actions Status](https://github.com/TimurVR/go-project-244/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/TimurVR/go-project-244/actions)
 
