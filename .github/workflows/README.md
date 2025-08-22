@@ -8,6 +8,7 @@ https://asciinema.org/a/cG3iHAIx5d8p8RrTvgA7lTcex
 https://asciinema.org/a/L3zLdfEdBLXcbpZTdoD10zcYj
 https://asciinema.org/a/1tkAnIr8hrXPaTjPNwozQXawx
 https://asciinema.org/a/ccrl70axUttr1ve6A3oSEdpoO
+https://asciinema.org/a/EVhGCjNqi4bcYT9XXLm47pSNW
 [![Hexlet Check](https://github.com/TimurVR/go-project-244/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/TimurVR/go-project-244/actions/workflows/hexlet-check.yml)
 [![Go CI](https://github.com/TimurVR/go-project-244/actions/workflows/go.yml/badge.svg)](https://github.com/TimurVR/go-project-244/actions/workflows/go.yml)
 [![CI](https://github.com/TimurVR/go-project-244/actions/workflows/ci.yml/badge.svg)](https://github.com/TimurVR/go-project-244/actions/workflows/ci.yml)

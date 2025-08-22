@@ -149,7 +149,6 @@ func parseValue(valueStr string) interface{} {
 	case "false":
 		return false
 	}
-
 	if num, err := strconv.Atoi(valueStr); err == nil {
 		return num
 	}
