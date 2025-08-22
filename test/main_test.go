@@ -4,6 +4,7 @@ import (
 	"code"
 	"testing"
 	"github.com/stretchr/testify/require"
+	format "code/formaters"
 )
 //json
 func TestGenDiffEmptyfilesJson(t *testing.T) {
@@ -68,4 +69,31 @@ func TestGenDiffmnyml(t *testing.T) {
 	m2:=code.Parsing("../testdata/yml/file1_mn.yml")
     ex1:= code.GenDiff(m1,m2 )
     require.Equal(t, "{\n    common: {\n    setting1: Value 1\n    setting2: 200\n    setting3: true\n    setting6: {\n    doge: {\n    wow: \n}\n    key: value\n}\n}\n    group1: {\n    baz: bas\n    foo: bar\n    nest: {\n    key: value\n}\n}\n    group2: {\n    abc: 12345\n    deep: {\n    id: 45\n}\n}\n}", ex1, "mnyml")
+}
+//formats
+//plan
+func TestGenDiffSimplePlanJson(t *testing.T) {
+	m1:=code.Parsing("../testdata/json/file1_simple.json")
+	m2:=code.Parsing("../testdata/json/file2_simple.json")
+    ex1:= format.FormatDiffOutput(code.GenDiff(m1,m2 ))
+    require.Equal(t, "Property 'b' was added with value: 'test2'\nProperty 'c' was removed\nProperty 'd' was added with value: false", ex1, "TestGenDiffSimplePlanJson")
+}
+func TestGenDiffSimplePlanYml(t *testing.T) {
+	m1:=code.Parsing("../testdata/yml/file1_simple.yml")
+	m2:=code.Parsing("../testdata/yml/file2_simple.yml")
+    ex1:= format.FormatDiffOutput(code.GenDiff(m1,m2 ))
+    require.Equal(t, "Property 'b' was added with value: 'test2'\nProperty 'c' was removed\nProperty 'd' was added with value: false", ex1, "TestGenDiffSimplePlanYml")
+}
+//json
+func TestGenDiffSimpleJsonJson(t *testing.T) {
+	m1:=code.Parsing("../testdata/json/file1_simple.json")
+	m2:=code.Parsing("../testdata/json/file2_simple.json")
+    ex1:= format.FormatDiffToJSON(code.GenDiff(m1,m2 ))
+    require.Equal(t, "{\n  \"common\": {\n    \"a\": 1\n  },\n  \"differences\": [\n    {\n      \"key\": \"b\",\n      \"newValue\": null,\n      \"oldValue\": \"test\",\n      \"type\": \"removed\"\n    },\n    {\n      \"key\": \"b\",\n      \"newValue\": \"test2\",\n      \"oldValue\": null,\n      \"type\": \"added\"\n    },\n    {\n      \"key\": \"c\",\n      \"newValue\": null,\n      \"oldValue\": true,\n      \"type\": \"removed\"\n    },\n    {\n      \"key\": \"d\",\n      \"newValue\": false,\n      \"oldValue\": null,\n      \"type\": \"added\"\n    }\n  ]\n}", ex1, "TestGenDiffSimpleJsonJson")
+}
+func TestGenDiffSimpleymlYml(t *testing.T) {
+	m1:=code.Parsing("../testdata/yml/file1_simple.yml")
+	m2:=code.Parsing("../testdata/yml/file2_simple.yml")
+    ex1:= format.FormatDiffToJSON(code.GenDiff(m1,m2 ))
+    require.Equal(t, "{\n  \"common\": {\n    \"a\": 1\n  },\n  \"differences\": [\n    {\n      \"key\": \"b\",\n      \"newValue\": null,\n      \"oldValue\": \"test\",\n      \"type\": \"removed\"\n    },\n    {\n      \"key\": \"b\",\n      \"newValue\": \"test2\",\n      \"oldValue\": null,\n      \"type\": \"added\"\n    },\n    {\n      \"key\": \"c\",\n      \"newValue\": null,\n      \"oldValue\": true,\n      \"type\": \"removed\"\n    },\n    {\n      \"key\": \"d\",\n      \"newValue\": false,\n      \"oldValue\": null,\n      \"type\": \"added\"\n    }\n  ]\n}", ex1, "TestGenDiffSimpleymlYml")
 }

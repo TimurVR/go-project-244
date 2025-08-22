@@ -1,11 +1,12 @@
 package main
 
 import (
-	"code"
 	"context"
 	"fmt"
 	"log"
 	"os"
+	"code"
+	format "code/formaters"
 	"github.com/urfave/cli/v3"
 )
 
@@ -33,13 +34,13 @@ func main() {
 			map1 := code.Parsing(path1)
 			map2 := code.Parsing(path2)
 			if cmd.String("format")=="stylish"{
-				fmt.Println(code.FormatDiffOutputStylish(code.GenDiff(map1, map2)))
+				fmt.Println(format.FormatDiffOutputStylish(code.GenDiff(map1, map2)))
 			}else if cmd.String("format")=="plan"{
-				fmt.Println(code.FormatDiffOutput(code.GenDiff(map1, map2)))
+				fmt.Println(format.FormatDiffOutput(code.GenDiff(map1, map2)))
 			}else{
-				fmt.Println(code.GenDiff(map1, map2))
+				fmt.Println(format.FormatDiffToJSON(code.GenDiff(map1, map2)))
 			}		
-			return nil
+			return nil 
 		},
 	}
 
