@@ -91,3 +91,9 @@ func TestGenDiffSimpleJsonJson(t *testing.T) {
     ex1:= format.FormatDiffToJSON(code.GenDiff(m1,m2 ))
     require.Equal(t, "{\n  \"common\": [\n    {\n      \"key\": \"b\",\n      \"value\": \"test2\"\n    },\n    {\n      \"key\": \"d\",\n      \"value\": false\n    }\n  ],\n  \"differences\": [\n    {\n      \"key\": \"b\",\n      \"newValue\": null,\n      \"oldValue\": \"test\",\n      \"type\": \"removed\"\n    },\n    {\n      \"key\": \"b\",\n      \"newValue\": \"test2\",\n      \"oldValue\": null,\n      \"type\": \"added\"\n    },\n    {\n      \"key\": \"c\",\n      \"newValue\": null,\n      \"oldValue\": true,\n      \"type\": \"removed\"\n    },\n    {\n      \"key\": \"d\",\n      \"newValue\": false,\n      \"oldValue\": null,\n      \"type\": \"added\"\n    }\n  ]\n}", ex1, "TestGenDiffSimpleJsonJson")
 }
+func TestGenDiffSimpleymlyml(t *testing.T) {
+	m1:=code.Parsing("../testdata/yml/file1_simple.yml")
+	m2:=code.Parsing("../testdata/yml/file2_simple.yml")
+    ex1:= format.FormatDiffToJSON(code.GenDiff(m1,m2 ))
+    require.Equal(t, "{\n  \"common\": [\n    {\n      \"key\": \"b\",\n      \"value\": \"test2\"\n    },\n    {\n      \"key\": \"d\",\n      \"value\": false\n    }\n  ],\n  \"differences\": [\n    {\n      \"key\": \"b\",\n      \"newValue\": null,\n      \"oldValue\": \"test\",\n      \"type\": \"removed\"\n    },\n    {\n      \"key\": \"b\",\n      \"newValue\": \"test2\",\n      \"oldValue\": null,\n      \"type\": \"added\"\n    },\n    {\n      \"key\": \"c\",\n      \"newValue\": null,\n      \"oldValue\": true,\n      \"type\": \"removed\"\n    },\n    {\n      \"key\": \"d\",\n      \"newValue\": false,\n      \"oldValue\": null,\n      \"type\": \"added\"\n    }\n  ]\n}", ex1, "TestGenDiffSimpleymlyml")
+}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
+	"sort"
 )
 
 func FormatDiffToJSON(input string) (string) {
@@ -20,9 +21,9 @@ func FormatDiffToJSON(input string) (string) {
 	if err != nil {
 		return ""
 	}
-
 	return string(jsonBytes)
 }
+
 func parseDifferences(lines []string) []map[string]interface{} {
 	differences := []map[string]interface{}{}
 	currentPath := []string{}
@@ -62,13 +63,10 @@ func parseDifferences(lines []string) []map[string]interface{} {
 			fullPath = append(fullPath, key)
 			pathStr := strings.Join(fullPath, ".")
 			pathStr = strings.TrimPrefix(pathStr, "common.")
-
 			diff := map[string]interface{}{
 				"key": pathStr,
 			}
-
 			value := parseValue(valueStr)
-			
 			if strings.HasPrefix(trimmedLine, "+ ") {
 				diff["type"] = "added"
 				diff["newValue"] = value
@@ -82,9 +80,13 @@ func parseDifferences(lines []string) []map[string]interface{} {
 			differences = append(differences, diff)
 		}
 	}
+	sort.Slice(differences, func(i, j int) bool {
+		return differences[i]["key"].(string) < differences[j]["key"].(string)
+	})
 
 	return differences
 }
+
 func buildCommonFromDifferences(differences []map[string]interface{}, result *map[string]interface{}) {
 	commonArray := []map[string]interface{}{}
 	commonMap := make(map[string]interface{})
@@ -98,14 +100,18 @@ func buildCommonFromDifferences(differences []map[string]interface{}, result *ma
 			delete(finalValues, key)
 		}
 	}
-
 	for keyPath, value := range finalValues {
 		setNestedValue(commonMap, keyPath, value)
 	}
-	for key, value := range commonMap {
+	keys := make([]string, 0, len(commonMap))
+	for key := range commonMap {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
 		commonArray = append(commonArray, map[string]interface{}{
 			"key":   key,
-			"value": value,
+			"value": commonMap[key],
 		})
 	}
 
@@ -114,7 +120,6 @@ func buildCommonFromDifferences(differences []map[string]interface{}, result *ma
 func setNestedValue(obj map[string]interface{}, keyPath string, value interface{}) {
 	keys := strings.Split(keyPath, ".")
 	current := obj
-
 	for i, key := range keys {
 		if i == len(keys)-1 {
 			current[key] = value
@@ -157,8 +162,8 @@ func parseValue(valueStr string) interface{} {
 	}
 	if strings.HasPrefix(valueStr, `"`) && strings.HasSuffix(valueStr, `"`) {
 		unquoted := valueStr[1 : len(valueStr)-1]
-		unquoted = strings.ReplaceAll(unquoted, ``, "<")
-		unquoted = strings.ReplaceAll(unquoted, ``, ">")
+		unquoted = strings.ReplaceAll(unquoted, `\u003c`, "<")
+		unquoted = strings.ReplaceAll(unquoted, `\u003e`, ">")
 		return unquoted
 	}
 	return valueStr
