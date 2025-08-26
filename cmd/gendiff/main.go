@@ -1,19 +1,19 @@
 package main
 
 import (
+	"code"
 	"context"
 	"fmt"
 	"log"
 	"os"
-	"code"
-	format "code/formaters"
+
 	"github.com/urfave/cli/v3"
 )
 
 func main() {
 	cmd := &cli.Command{
-		Name:      "gendiff",
-		Usage:     "Compares two configuration files and shows a difference.",
+		Name:  "gendiff",
+		Usage: "Compares two configuration files and shows a difference.",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "format",
@@ -31,16 +31,20 @@ func main() {
 			}
 			path1 := cmd.Args().First()
 			path2 := cmd.Args().Get(1)
-			map1 := code.Parsing(path1)
-			map2 := code.Parsing(path2)
-			if cmd.String("format")=="stylish"{
-				fmt.Println(format.FormatDiffOutputStylish(code.GenDiff(map1, map2)))
-			}else if cmd.String("format")=="plan"{
-				fmt.Println(format.FormatDiffOutput(code.GenDiff(map1, map2)))
-			}else{
-				fmt.Println(format.FormatDiffToJSON(code.GenDiff(map1, map2)))
-			}		
-			return nil 
+			map1, err := code.Parsing(path1)
+			if err != nil {
+				fmt.Println(err)
+			}
+			map2, err := code.Parsing(path2)
+			if err != nil {
+				fmt.Println(err)
+			}
+			res, err := code.GenDiff(map1, map2, cmd.String("format"))
+			if err != nil {
+				fmt.Println(err)
+			}
+			fmt.Println(res)
+			return nil
 		},
 	}
 
