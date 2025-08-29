@@ -15,7 +15,7 @@ func FormatDiffOutputStylish(diffOutput string) string {
 			if depth > 0 {
 				depth--
 			}
-			indent := strings.Repeat("   ", depth)
+			indent := strings.Repeat("    ", depth)
 			result = append(result, fmt.Sprintf("%s}", indent))
 			continue
 		}
@@ -23,6 +23,11 @@ func FormatDiffOutputStylish(diffOutput string) string {
 			continue
 		}
 		indent := strings.Repeat("    ", depth)
+		if trimmed == "{" {
+			result = append(result, fmt.Sprintf("%s{", indent))
+			depth++
+			continue
+		}
 		switch {
 		case strings.HasPrefix(trimmed, "- "):
 			content := strings.TrimPrefix(trimmed, "- ")
@@ -30,10 +35,7 @@ func FormatDiffOutputStylish(diffOutput string) string {
 		case strings.HasPrefix(trimmed, "+ "):
 			content := strings.TrimPrefix(trimmed, "+ ")
 			result = append(result, fmt.Sprintf("%s  + %s", indent, content))
-		case trimmed == "{":
-			result = append(result, fmt.Sprintf("%s{", indent))
-			depth++
-		case strings.Contains(trimmed, ":") && !strings.HasPrefix(trimmed, "- ") && !strings.HasPrefix(trimmed, "+ "):
+		case strings.Contains(trimmed, ":"):
 			result = append(result, fmt.Sprintf("%s    %s", indent, trimmed))
 		default:
 			result = append(result, fmt.Sprintf("%s%s", indent, trimmed))
