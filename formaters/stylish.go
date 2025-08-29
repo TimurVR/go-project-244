@@ -14,13 +14,13 @@ func FormatDiffOutputStylish(input string) string {
 		if trimmed == "" {
 			continue
 		}
-		if trimmed == "}" || strings.HasSuffix(trimmed, "}") {
+		if strings.HasPrefix(trimmed, "}") || (strings.Contains(trimmed, "}") && !strings.Contains(trimmed, "{")) {
 			indentLevel = max(0, indentLevel-1)
 		}
 		indent := strings.Repeat("    ", indentLevel)
 		formattedLine := formatStylishLine(trimmed, indent)
 		result = append(result, formattedLine)
-		if trimmed == "{" || strings.HasSuffix(trimmed, "{") {
+		if strings.HasSuffix(trimmed, "{") {
 			indentLevel++
 		}
 	}
@@ -31,34 +31,35 @@ func FormatDiffOutputStylish(input string) string {
 func formatStylishLine(line string, indent string) string {
 	cleanedLine := strings.TrimSpace(line)
 	cleanedLine = strings.ReplaceAll(cleanedLine, "<nil>", "null")
-	if strings.HasSuffix(cleanedLine, ": ") {
-		cleanedLine = strings.TrimSuffix(cleanedLine, " ")
+	if strings.Contains(cleanedLine, ": {") {
+		if strings.HasPrefix(cleanedLine, "+ ") {
+			content := strings.TrimPrefix(cleanedLine, "+ ")
+			return indent + "+ " + removeInnerPrefixes(content)
+		} else if strings.HasPrefix(cleanedLine, "- ") {
+			content := strings.TrimPrefix(cleanedLine, "- ")
+			return indent + "- " + removeInnerPrefixes(content)
+		} else {
+			return indent + removeInnerPrefixes(cleanedLine)
+		}
 	}
-	switch {
-	case cleanedLine == "{" || cleanedLine == "}":
+	if cleanedLine == "{" || cleanedLine == "}" {
 		return indent + cleanedLine
-
-	case strings.HasPrefix(cleanedLine, "+ "):
+	} else if strings.HasPrefix(cleanedLine, "+ ") {
 		content := strings.TrimPrefix(cleanedLine, "+ ")
-		if strings.Contains(content, ": {") {
-			parts := strings.SplitN(content, ": {", 2)
-			return indent + "+ " + parts[0] + ": {" + parts[1]
-		}
 		return indent + "+ " + content
-
-	case strings.HasPrefix(cleanedLine, "- "):
+	} else if strings.HasPrefix(cleanedLine, "- ") {
 		content := strings.TrimPrefix(cleanedLine, "- ")
-		if strings.Contains(content, ": {") {
-			parts := strings.SplitN(content, ": {", 2)
-			return indent + "- " + parts[0] + ": {" + parts[1]
-		}
 		return indent + "- " + content
-
-	default:
-		content := strings.TrimPrefix(cleanedLine, "+ ")
-		content = strings.TrimPrefix(content, "- ")
-		return indent + content
+	} else {
+		return indent + cleanedLine
 	}
+}
+func removeInnerPrefixes(content string) string {
+	content = strings.ReplaceAll(content, ": + ", ": ")
+	content = strings.ReplaceAll(content, ": - ", ": ")
+	content = strings.ReplaceAll(content, "+ ", "")
+	content = strings.ReplaceAll(content, "- ", "")
+	return content
 }
 
 func max(a, b int) int {
