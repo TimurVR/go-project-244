@@ -14,37 +14,50 @@ func FormatDiffOutputStylish(input string) string {
 		if trimmed == "" {
 			continue
 		}
-		if strings.Contains(trimmed, "}") && !strings.Contains(trimmed, "{") {
+		if strings.HasPrefix(trimmed, "}") || strings.HasSuffix(trimmed, "}") {
 			indentLevel--
-			if indentLevel < 0 {
-				indentLevel = 0
-			}
 		}
-		formattedLine := formatStylishLine(trimmed, indentLevel)
+		indent := strings.Repeat("    ", max(0, indentLevel))
+		formattedLine := formatStylishLine(trimmed, indent)
 		result = append(result, formattedLine)
-		if strings.Contains(trimmed, "{") && !strings.Contains(trimmed, "}") {
+		if strings.HasSuffix(trimmed, "{") {
 			indentLevel++
-			if indentLevel > 6 {
-				indentLevel = 6
-			}
 		}
 	}
+
 	return strings.Join(result, "\n")
 }
 
-func formatStylishLine(line string, indentLevel int) string {
-	baseIndent := strings.Repeat("    ", indentLevel)
+func formatStylishLine(line string, indent string) string {
 	cleanedLine := strings.TrimSpace(line)
+	cleanedLine = strings.ReplaceAll(cleanedLine, "<nil>", "null")
 
 	if cleanedLine == "{" || cleanedLine == "}" {
-		return baseIndent + cleanedLine
+		return indent + cleanedLine
 	} else if strings.HasPrefix(cleanedLine, "+ ") {
 		content := strings.TrimPrefix(cleanedLine, "+ ")
-		return baseIndent + "+ " + content
+		if strings.Contains(content, ": {") || strings.Contains(content, ": +") {
+			content = strings.ReplaceAll(content, ": +", ": ")
+			content = strings.ReplaceAll(content, "+ ", "")
+		}
+		return indent + "+ " + content
 	} else if strings.HasPrefix(cleanedLine, "- ") {
 		content := strings.TrimPrefix(cleanedLine, "- ")
-		return baseIndent + "- " + content
+		if strings.Contains(content, ": {") || strings.Contains(content, ": -") {
+			content = strings.ReplaceAll(content, ": -", ": ")
+			content = strings.ReplaceAll(content, "- ", "")
+		}
+		return indent + "- " + content
 	} else {
-		return baseIndent + cleanedLine
+		cleanedLine = strings.ReplaceAll(cleanedLine, "+ ", "")
+		cleanedLine = strings.ReplaceAll(cleanedLine, "- ", "")
+		return indent + cleanedLine
 	}
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
