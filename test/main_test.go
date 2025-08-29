@@ -122,12 +122,12 @@ func TestGenDiffSimpleStylishJson(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n        a: 1\n      - b: test\n      + b: test2\n      - c: true\n      + d: false\n}", ex1, "TestGenDiffSimpleJsonJson")
+	require.Equal(t, "{\n  a: 1\n  - b: test\n  + b: test2\n  - c: true\n  + d: false\n}", ex1, "TestGenDiffSimpleJsonJson")
 }
 func TestGenDiffSimpleStylishYml(t *testing.T) {
 	ex1, err := code.GenDiff("../testdata/yml/file1_simple.yml", "../testdata/yml/file2_simple.yml", "stylish")
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n        a: 1\n      - b: test\n      + b: test2\n      - c: true\n      + d: false\n}", ex1, "TestGenDiffSimpleymlyml")
+	require.Equal(t, "{\n  a: 1\n  - b: test\n  + b: test2\n  - c: true\n  + d: false\n}", ex1, "TestGenDiffSimpleymlyml")
 }
