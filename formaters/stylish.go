@@ -15,7 +15,7 @@ func FormatDiffOutputStylish(diffOutput string) string {
 			if depth > 0 {
 				depth--
 			}
-			indent := strings.Repeat("    ", depth)
+			indent := strings.Repeat("   ", depth)
 			result = append(result, fmt.Sprintf("%s}", indent))
 			continue
 		}
