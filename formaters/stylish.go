@@ -5,7 +5,6 @@ import (
 )
 
 func FormatDiffOutputStylish(diffOutput string) string {
-	// Убираем обрамляющие фигурные скобки если они есть
 	trimmedOutput := strings.TrimSpace(diffOutput)
 	if strings.HasPrefix(trimmedOutput, "{") && strings.HasSuffix(trimmedOutput, "}") {
 		trimmedOutput = strings.TrimSpace(trimmedOutput[1 : len(trimmedOutput)-1])
@@ -20,11 +19,9 @@ func FormatDiffOutputStylish(diffOutput string) string {
 		if trimmed == "" {
 			continue
 		}
+		trimmed = strings.ReplaceAll(trimmed, "<nil>", "null")
 
-		// Базовый отступ - 4 пробела на уровень глубины
 		baseIndent := strings.Repeat("    ", depth)
-
-		// Обработка закрывающих скобок
 		if trimmed == "}" {
 			if depth > 0 {
 				depth--
@@ -33,12 +30,8 @@ func FormatDiffOutputStylish(diffOutput string) string {
 			result = append(result, baseIndent+"}")
 			continue
 		}
-
-		// Обработка открывающих скобок объектов
 		if strings.HasSuffix(trimmed, "{") {
-			// Определяем префикс на основе начала строки
-			var prefix string
-			var content string
+			var prefix, content string
 
 			if strings.HasPrefix(trimmed, "- ") {
 				prefix = "  - "
@@ -50,23 +43,38 @@ func FormatDiffOutputStylish(diffOutput string) string {
 				prefix = "    "
 				content = strings.TrimSuffix(trimmed, " {")
 			}
-
+			content = strings.TrimSuffix(content, ":")
 			result = append(result, baseIndent+prefix+content+": {")
 			depth++
 			continue
 		}
+		if strings.Contains(trimmed, ":") {
+			parts := strings.SplitN(trimmed, ":", 2)
+			keyPart := strings.TrimSpace(parts[0])
+			valuePart := strings.TrimSpace(parts[1])
+			var prefix string
+			var key string
+			if strings.HasPrefix(keyPart, "- ") {
+				prefix = "  - "
+				key = strings.TrimPrefix(keyPart, "- ")
+			} else if strings.HasPrefix(keyPart, "+ ") {
+				prefix = "  + "
+				key = strings.TrimPrefix(keyPart, "+ ")
+			} else {
+				prefix = "    "
+				key = keyPart
+			}
 
-		// Для обычных строк просто добавляем отступы, сохраняя оригинальные префиксы
-		// Определяем нужный отступ based on prefix
-		if strings.HasPrefix(trimmed, "- ") {
-			result = append(result, baseIndent+"  - "+strings.TrimPrefix(trimmed, "- "))
-		} else if strings.HasPrefix(trimmed, "+ ") {
-			result = append(result, baseIndent+"  + "+strings.TrimPrefix(trimmed, "+ "))
+			result = append(result, baseIndent+prefix+key+": "+valuePart)
 		} else {
-			result = append(result, baseIndent+"    "+trimmed)
+			if strings.HasPrefix(trimmed, "- ") {
+				result = append(result, baseIndent+"  - "+strings.TrimPrefix(trimmed, "- "))
+			} else if strings.HasPrefix(trimmed, "+ ") {
+				result = append(result, baseIndent+"  + "+strings.TrimPrefix(trimmed, "+ "))
+			} else {
+				result = append(result, baseIndent+"    "+trimmed)
+			}
 		}
 	}
-
-	// Возвращаем результат с обрамляющими скобками
 	return "{\n" + strings.Join(result, "\n") + "\n}"
 }
