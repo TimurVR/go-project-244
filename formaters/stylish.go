@@ -5,6 +5,7 @@ import (
 )
 
 func FormatDiffOutputStylish(diffOutput string) string {
+
 	trimmedOutput := strings.TrimSpace(diffOutput)
 	if strings.HasPrefix(trimmedOutput, "{") && strings.HasSuffix(trimmedOutput, "}") {
 		trimmedOutput = strings.TrimSpace(trimmedOutput[1 : len(trimmedOutput)-1])
@@ -19,8 +20,6 @@ func FormatDiffOutputStylish(diffOutput string) string {
 		if trimmed == "" {
 			continue
 		}
-		trimmed = strings.ReplaceAll(trimmed, "<nil>", "null")
-
 		baseIndent := strings.Repeat("    ", depth)
 		if trimmed == "}" {
 			if depth > 0 {
@@ -31,7 +30,8 @@ func FormatDiffOutputStylish(diffOutput string) string {
 			continue
 		}
 		if strings.HasSuffix(trimmed, "{") {
-			var prefix, content string
+			var prefix string
+			var content string
 
 			if strings.HasPrefix(trimmed, "- ") {
 				prefix = "  - "
@@ -43,37 +43,17 @@ func FormatDiffOutputStylish(diffOutput string) string {
 				prefix = "    "
 				content = strings.TrimSuffix(trimmed, " {")
 			}
-			content = strings.TrimSuffix(content, ":")
+
 			result = append(result, baseIndent+prefix+content+": {")
 			depth++
 			continue
 		}
-		if strings.Contains(trimmed, ":") {
-			parts := strings.SplitN(trimmed, ":", 2)
-			keyPart := strings.TrimSpace(parts[0])
-			valuePart := strings.TrimSpace(parts[1])
-			var prefix string
-			var key string
-			if strings.HasPrefix(keyPart, "- ") {
-				prefix = "  - "
-				key = strings.TrimPrefix(keyPart, "- ")
-			} else if strings.HasPrefix(keyPart, "+ ") {
-				prefix = "  + "
-				key = strings.TrimPrefix(keyPart, "+ ")
-			} else {
-				prefix = "    "
-				key = keyPart
-			}
-
-			result = append(result, baseIndent+prefix+key+": "+valuePart)
+		if strings.HasPrefix(trimmed, "- ") {
+			result = append(result, baseIndent+"  - "+strings.TrimPrefix(trimmed, "- "))
+		} else if strings.HasPrefix(trimmed, "+ ") {
+			result = append(result, baseIndent+"  + "+strings.TrimPrefix(trimmed, "+ "))
 		} else {
-			if strings.HasPrefix(trimmed, "- ") {
-				result = append(result, baseIndent+"  - "+strings.TrimPrefix(trimmed, "- "))
-			} else if strings.HasPrefix(trimmed, "+ ") {
-				result = append(result, baseIndent+"  + "+strings.TrimPrefix(trimmed, "+ "))
-			} else {
-				result = append(result, baseIndent+"    "+trimmed)
-			}
+			result = append(result, baseIndent+"    "+trimmed)
 		}
 	}
 	return "{\n" + strings.Join(result, "\n") + "\n}"
