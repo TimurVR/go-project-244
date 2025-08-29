@@ -28,18 +28,22 @@ func FormatDiffOutputStylish(diffOutput string) string {
 			depth++
 			continue
 		}
+		contentIndent := strings.Repeat("    ", depth)
 		switch {
 		case strings.HasPrefix(trimmed, "- "):
 			content := strings.TrimPrefix(trimmed, "- ")
-			result = append(result, fmt.Sprintf("%s  - %s", indent, content))
+			result = append(result, fmt.Sprintf("%s  - %s", contentIndent, content))
 		case strings.HasPrefix(trimmed, "+ "):
 			content := strings.TrimPrefix(trimmed, "+ ")
-			result = append(result, fmt.Sprintf("%s  + %s", indent, content))
+			result = append(result, fmt.Sprintf("%s  + %s", contentIndent, content))
 		case strings.Contains(trimmed, ":"):
-			result = append(result, fmt.Sprintf("%s    %s", indent, trimmed))
+			result = append(result, fmt.Sprintf("%s    %s", contentIndent, trimmed))
 		default:
-			result = append(result, fmt.Sprintf("%s%s", indent, trimmed))
+			result = append(result, fmt.Sprintf("%s%s", contentIndent, trimmed))
 		}
 	}
-	return strings.Join(result, "\n")
+	formattedResult := strings.Join(result, "\n")
+	formattedResult = strings.ReplaceAll(formattedResult, "<nil>", "null")
+
+	return formattedResult
 }
