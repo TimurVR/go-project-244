@@ -24,7 +24,7 @@ func FormatDiffOutputStylish(input string) string {
 		result = append(result, formattedLine)
 		if strings.Contains(trimmed, "{") && !strings.Contains(trimmed, "}") {
 			indentLevel++
-			if indentLevel == 7 {
+			if indentLevel > 6 {
 				indentLevel = 6
 			}
 		}
