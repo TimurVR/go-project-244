@@ -2,12 +2,12 @@ package code
 
 import (
 	"encoding/json"
+	"sort"
 	"strconv"
 	"strings"
-	"sort"
 )
 
-func FormatDiffToJSON(input string) (string) {
+func FormatDiffToJSON(input string) (string, error) {
 	lines := strings.Split(input, "\n")
 	result := map[string]interface{}{
 		"differences": []map[string]interface{}{},
@@ -19,9 +19,9 @@ func FormatDiffToJSON(input string) (string) {
 
 	jsonBytes, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
-		return ""
+		return "", err
 	}
-	return string(jsonBytes)
+	return string(jsonBytes), err
 }
 
 func parseDifferences(lines []string) []map[string]interface{} {
@@ -37,7 +37,7 @@ func parseDifferences(lines []string) []map[string]interface{} {
 			parts := strings.SplitN(trimmedLine, ":", 2)
 			key := strings.TrimSpace(parts[0])
 			valueStr := strings.TrimSpace(parts[1])
-			
+
 			if valueStr == "" || valueStr == "{" {
 				currentPath = append(currentPath, key)
 			}
@@ -93,7 +93,7 @@ func buildCommonFromDifferences(differences []map[string]interface{}, result *ma
 	finalValues := make(map[string]interface{})
 	for _, diff := range differences {
 		key := diff["key"].(string)
-		
+
 		if diff["type"] == "added" {
 			finalValues[key] = diff["newValue"]
 		} else if diff["type"] == "removed" {
@@ -135,7 +135,7 @@ func setNestedValue(obj map[string]interface{}, keyPath string, value interface{
 }
 func parseValue(valueStr string) interface{} {
 	valueStr = strings.TrimSpace(valueStr)
-	
+
 	if valueStr == "{" {
 		return nil
 	}

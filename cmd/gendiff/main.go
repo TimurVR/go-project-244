@@ -31,15 +31,8 @@ func main() {
 			}
 			path1 := cmd.Args().First()
 			path2 := cmd.Args().Get(1)
-			map1, err := code.Parsing(path1)
-			if err != nil {
-				fmt.Println(err)
-			}
-			map2, err := code.Parsing(path2)
-			if err != nil {
-				fmt.Println(err)
-			}
-			res, err := code.GenDiff(map1, map2, cmd.String("format"))
+
+			res, err := code.GenDiff(path1, path2, cmd.String("format"))
 			if err != nil {
 				fmt.Println(err)
 			}

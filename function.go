@@ -32,7 +32,35 @@ func Parsing(file string) (map[string]interface{}, error) {
 	}
 	return data1, nil
 }
-func GenDiff(map1, map2 map[string]interface{}, style string) (string, error) {
+func GenDiff(file1 string, file2 string, style string) (string, error) {
+	map1, err := Parsing(file1)
+	if err != nil {
+		return "", err
+	}
+	map2, err := Parsing(file2)
+	if err != nil {
+		return "", err
+	}
+	var str string
+	str, err = GenDifference(map1, map2)
+	if err != nil {
+		return "", err
+	}
+	switch style {
+	case "json":
+		temp, err := format.FormatDiffToJSON(str)
+		if err != nil {
+			return "", err
+		}
+		str = temp
+	case "stylish":
+		str = format.FormatDiffOutputStylish(str)
+	case "plan":
+		str = format.FormatDiffOutput(str)
+	}
+	return str, nil
+}
+func GenDifference(map1, map2 map[string]interface{}) (string, error) {
 	keys := []string{}
 	for key := range map1 {
 		keys = append(keys, key)
@@ -61,7 +89,7 @@ func GenDiff(map1, map2 map[string]interface{}, style string) (string, error) {
 			}
 		}
 		if isValue1Object && isValue2Object {
-			temp, err := GenDiff(value1.(map[string]interface{}), value2.(map[string]interface{}), "")
+			temp, err := GenDifference(value1.(map[string]interface{}), value2.(map[string]interface{}))
 			if err != nil {
 				return "", err
 			}
@@ -71,14 +99,14 @@ func GenDiff(map1, map2 map[string]interface{}, style string) (string, error) {
 		if isValue1Object && !isValue2Object {
 			emptyMap := make(map[string]interface{})
 			if exist2 {
-				temp, err := GenDiff(value1.(map[string]interface{}), emptyMap, "")
+				temp, err := GenDifference(value1.(map[string]interface{}), emptyMap)
 				if err != nil {
 					return "", err
 				}
 				str += fmt.Sprintf("  - %s: %s\n", key, temp)
 				str += fmt.Sprintf("  + %s: %v\n", key, value2)
 			} else {
-				temp, err := GenDiff(value1.(map[string]interface{}), emptyMap, "")
+				temp, err := GenDifference(value1.(map[string]interface{}), emptyMap)
 				if err != nil {
 					return "", err
 				}
@@ -90,15 +118,15 @@ func GenDiff(map1, map2 map[string]interface{}, style string) (string, error) {
 			emptyMap := make(map[string]interface{})
 			if exist1 {
 				str += fmt.Sprintf("  - %s: %v\n", key, value1)
-				temp, err := GenDiff(emptyMap, value2.(map[string]interface{}), "")
+				temp, err := GenDifference(emptyMap, value2.(map[string]interface{}))
 				if err != nil {
 					return "", err
 				}
 				str += fmt.Sprintf("  + %s: %s\n", key, temp)
 			} else {
-				temp, err := GenDiff(emptyMap, value2.(map[string]interface{}), "")
+				temp, err := GenDifference(emptyMap, value2.(map[string]interface{}))
 				if err != nil {
-					return "", nil
+					return "", err
 				}
 				str += fmt.Sprintf("  + %s: %s\n", key, temp)
 			}
@@ -118,13 +146,5 @@ func GenDiff(map1, map2 map[string]interface{}, style string) (string, error) {
 		}
 	}
 	str += "}"
-	switch style {
-	case "json":
-		str = format.FormatDiffToJSON(str)
-	case "stylish":
-		str = format.FormatDiffOutputStylish(str)
-	case "plan":
-		str = format.FormatDiffOutput(str)
-	}
 	return str, nil
 }
