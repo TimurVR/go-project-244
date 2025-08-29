@@ -21,6 +21,9 @@ func FormatDiffOutputStylish(diffOutput string) string {
 			continue
 		}
 
+		// Заменяем <nil> на null
+		trimmed = strings.ReplaceAll(trimmed, "<nil>", "null")
+
 		// Базовый отступ - 4 пробела на уровень глубины
 		baseIndent := strings.Repeat("    ", depth)
 
@@ -56,29 +59,16 @@ func FormatDiffOutputStylish(diffOutput string) string {
 			continue
 		}
 
-		// Обработка обычных свойств - проверяем, содержит ли строка уже двоеточие
-		if strings.Contains(trimmed, ":") {
-			// Если строка уже содержит двоеточие, просто добавляем отступы и префиксы
-			if strings.HasPrefix(trimmed, "- ") {
-				content := strings.TrimPrefix(trimmed, "- ")
-				result = append(result, baseIndent+"  - "+content)
-			} else if strings.HasPrefix(trimmed, "+ ") {
-				content := strings.TrimPrefix(trimmed, "+ ")
-				result = append(result, baseIndent+"  + "+content)
-			} else {
-				result = append(result, baseIndent+"    "+trimmed)
-			}
+		// Обработка обычных свойств - сохраняем оригинальные префиксы
+		if strings.HasPrefix(trimmed, "- ") {
+			content := strings.TrimPrefix(trimmed, "- ")
+			result = append(result, baseIndent+"  - "+content)
+		} else if strings.HasPrefix(trimmed, "+ ") {
+			content := strings.TrimPrefix(trimmed, "+ ")
+			result = append(result, baseIndent+"  + "+content)
 		} else {
-			// Если строка не содержит двоеточия, обрабатываем как раньше
-			if strings.HasPrefix(trimmed, "- ") {
-				content := strings.TrimPrefix(trimmed, "- ")
-				result = append(result, baseIndent+"  - "+content)
-			} else if strings.HasPrefix(trimmed, "+ ") {
-				content := strings.TrimPrefix(trimmed, "+ ")
-				result = append(result, baseIndent+"  + "+content)
-			} else {
-				result = append(result, baseIndent+"    "+trimmed)
-			}
+			// Для строк без префиксов добавляем 4 пробела вместо префикса
+			result = append(result, baseIndent+"    "+trimmed)
 		}
 	}
 
