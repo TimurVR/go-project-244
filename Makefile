@@ -19,7 +19,3 @@ test-with-coverage:
 run: build
 	./bin/gendiff.exe $(ARGS)
 
-clean:
-	if exist bin rmdir /s /q bin
-	if exist coverage.out del coverage.out
-	if exist coverage.html del coverage.html
