@@ -11,16 +11,19 @@ func FormatDiffOutput(diffOutput string) string {
 	lines := strings.Split(diffOutput, "\n")
 	changes := make(map[string]ChangeInfo)
 	var currentPath []string
-	stack := []map[string]bool{}
+	stack := []map[string]interface{}{}
+
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "" {
 			continue
 		}
+
 		if trimmed == "{" {
-			stack = append(stack, make(map[string]bool))
+			stack = append(stack, make(map[string]interface{}))
 			continue
 		}
+
 		if trimmed == "}" {
 			if len(stack) > 0 {
 				stack = stack[:len(stack)-1]
@@ -30,20 +33,26 @@ func FormatDiffOutput(diffOutput string) string {
 			}
 			continue
 		}
+
 		if strings.Contains(trimmed, ":") {
 			parts := strings.SplitN(trimmed, ":", 2)
 			key := strings.TrimSpace(parts[0])
 			value := strings.TrimSpace(parts[1])
 
 			operation := "unchanged"
+			cleanKey := key
+
 			if strings.HasPrefix(key, "+ ") {
 				operation = "added"
-				key = strings.TrimPrefix(key, "+ ")
+				cleanKey = strings.TrimPrefix(key, "+ ")
 			} else if strings.HasPrefix(key, "- ") {
 				operation = "removed"
-				key = strings.TrimPrefix(key, "- ")
+				cleanKey = strings.TrimPrefix(key, "- ")
 			}
-			fullPath := buildPath(append(currentPath, key))
+
+			fullPath := buildPath(append(currentPath, cleanKey))
+
+			// Обработка вложенных объектов
 			if value == "{" {
 				if operation == "added" {
 					changes[fullPath] = ChangeInfo{
@@ -57,72 +66,84 @@ func FormatDiffOutput(diffOutput string) string {
 						Value:     "",
 						IsComplex: true,
 					}
+				} else {
+					// Для неизмененных сложных объектов просто продолжаем путь
+					currentPath = append(currentPath, cleanKey)
+					stack = append(stack, make(map[string]interface{}))
+					continue
 				}
-				currentPath = append(currentPath, key)
-				stack = append(stack, make(map[string]bool))
+				currentPath = append(currentPath, cleanKey)
+				stack = append(stack, make(map[string]interface{}))
 				continue
 			}
-			if operation == "added" || operation == "removed" {
-				changes[fullPath] = ChangeInfo{
-					Operation: operation,
-					Value:     value,
-					IsComplex: false,
+
+			// Обработка простых значений
+			if operation != "unchanged" {
+				// Проверяем, есть ли противоположная операция для этого пути
+				if existing, exists := changes[fullPath]; exists {
+					if (existing.Operation == "added" && operation == "removed") ||
+						(existing.Operation == "removed" && operation == "added") {
+						// Это обновление значения
+						fromValue := existing.Value
+						if existing.Operation == "removed" {
+							fromValue = existing.Value
+						}
+						changes[fullPath] = ChangeInfo{
+							Operation: "updated",
+							OldValue:  fromValue,
+							Value:     value,
+							IsComplex: false,
+						}
+					}
+				} else {
+					// Новая операция
+					changes[fullPath] = ChangeInfo{
+						Operation: operation,
+						Value:     value,
+						IsComplex: false,
+					}
 				}
 			}
 		}
 	}
+
 	return formatChanges(changes)
 }
 
 func formatChanges(changes map[string]ChangeInfo) string {
 	var result []string
 	processed := make(map[string]bool)
+
+	// Сначала обрабатываем обновления
 	for path, change := range changes {
-		if processed[path] {
-			continue
-		}
-		if change.Operation == "added" {
-			if removedChange, exists := changes[path]; exists && removedChange.Operation == "removed" {
-				fromValue := formatValue(removedChange.Value, removedChange.IsComplex)
-				toValue := formatValue(change.Value, change.IsComplex)
-				result = append(result, fmt.Sprintf("Property '%s' was updated. From %s to %s", path, fromValue, toValue))
-				processed[path] = true
-				continue
-			}
+		if change.Operation == "updated" {
+			fromValue := formatValue(change.OldValue, false)
+			toValue := formatValue(change.Value, false)
+			result = append(result, fmt.Sprintf("Property '%s' was updated. From %s to %s", path, fromValue, toValue))
+			processed[path] = true
 		}
 	}
-	for path, change := range changes {
-		if processed[path] {
-			continue
-		}
-		switch change.Operation {
-		case "added":
-			value := formatValue(change.Value, change.IsComplex)
-			result = append(result, fmt.Sprintf("Property '%s' was added with value: %s", path, value))
-		case "removed":
-			parentPath := getParentPath(path)
-			if _, parentRemoved := changes[parentPath]; !parentRemoved || changes[parentPath].Operation != "removed" {
-				result = append(result, fmt.Sprintf("Property '%s' was removed", path))
-			}
-		}
-	}
+
+	// Затем обрабатываем добавления и удаления
 	for path, change := range changes {
 		if processed[path] {
 			continue
 		}
 
-		if change.IsComplex && (change.Operation == "removed" || change.Operation == "added") {
-			if change.Operation == "removed" {
-				if !hasRemovedParent(path, changes) {
-					result = append(result, fmt.Sprintf("Property '%s' was removed", path))
-				}
-			} else if change.Operation == "added" {
-				if !hasAddedParent(path, changes) {
-					value := formatValue(change.Value, change.IsComplex)
-					result = append(result, fmt.Sprintf("Property '%s' was added with value: %s", path, value))
-				}
-			}
-			processed[path] = true
+		// Пропускаем если родительский объект был удален/добавлен
+		if hasParentOperation(path, changes, "removed") && change.Operation == "removed" {
+			continue
+		}
+		if hasParentOperation(path, changes, "added") && change.Operation == "added" {
+			continue
+		}
+
+		switch change.Operation {
+		case "added":
+			value := formatValue(change.Value, change.IsComplex)
+			result = append(result, fmt.Sprintf("Property '%s' was added with value: %s", path, value))
+		case "removed":
+			result = append(result, fmt.Sprintf("Property '%s' was removed", path))
 		}
 	}
 
@@ -130,37 +151,21 @@ func formatChanges(changes map[string]ChangeInfo) string {
 	return strings.Join(result, "\n")
 }
 
-func hasRemovedParent(path string, changes map[string]ChangeInfo) bool {
+func hasParentOperation(path string, changes map[string]ChangeInfo, operation string) bool {
 	parts := strings.Split(path, ".")
 	for i := len(parts) - 1; i > 0; i-- {
 		parentPath := strings.Join(parts[:i], ".")
-		if change, exists := changes[parentPath]; exists && change.Operation == "removed" {
+		if change, exists := changes[parentPath]; exists && change.Operation == operation {
 			return true
 		}
 	}
 	return false
 }
 
-func hasAddedParent(path string, changes map[string]ChangeInfo) bool {
-	parts := strings.Split(path, ".")
-	for i := len(parts) - 1; i > 0; i-- {
-		parentPath := strings.Join(parts[:i], ".")
-		if change, exists := changes[parentPath]; exists && change.Operation == "added" {
-			return true
-		}
-	}
-	return false
-}
-func getParentPath(path string) string {
-	parts := strings.Split(path, ".")
-	if len(parts) <= 1 {
-		return ""
-	}
-	return strings.Join(parts[:len(parts)-1], ".")
-}
 func buildPath(path []string) string {
 	return strings.Join(path, ".")
 }
+
 func formatValue(value string, isComplex bool) string {
 	if isComplex {
 		return "[complex value]"
@@ -186,5 +191,6 @@ func formatValue(value string, isComplex bool) string {
 type ChangeInfo struct {
 	Operation string
 	Value     string
+	OldValue  string
 	IsComplex bool
 }
