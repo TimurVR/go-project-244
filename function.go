@@ -55,7 +55,7 @@ func GenDiff(file1 string, file2 string, style string) (string, error) {
 		str = temp
 	case "stylish":
 		str = format.FormatDiffOutputStylish(str)
-	case "plan":
+	case "plain":
 		str = format.FormatDiffOutput(str)
 	}
 	return str, nil

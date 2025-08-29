@@ -86,14 +86,14 @@ func TestGenDiffmnyml(t *testing.T) {
 // formats
 // plan
 func TestGenDiffSimplePlanJson(t *testing.T) {
-	ex1, err := code.GenDiff("../testdata/json/file1_simple.json", "../testdata/json/file2_simple.json", "plan")
+	ex1, err := code.GenDiff("../testdata/json/file1_simple.json", "../testdata/json/file2_simple.json", "plain")
 	if err != nil {
 		t.Fatal(err)
 	}
 	require.Equal(t, "Property 'b' was added with value: 'test2'\nProperty 'c' was removed\nProperty 'd' was added with value: false", ex1, "TestGenDiffSimplePlanJson")
 }
 func TestGenDiffSimplePlanYml(t *testing.T) {
-	ex1, err := code.GenDiff("../testdata/yml/file1_simple.yml", "../testdata/yml/file2_simple.yml", "plan")
+	ex1, err := code.GenDiff("../testdata/yml/file1_simple.yml", "../testdata/yml/file2_simple.yml", "plain")
 	if err != nil {
 		t.Fatal(err)
 	}
