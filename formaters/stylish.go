@@ -14,13 +14,13 @@ func FormatDiffOutputStylish(input string) string {
 		if trimmed == "" {
 			continue
 		}
-		if strings.HasPrefix(trimmed, "}") || strings.HasSuffix(trimmed, "}") {
-			indentLevel--
+		if trimmed == "}" || strings.HasSuffix(trimmed, "}") {
+			indentLevel = max(0, indentLevel-1)
 		}
-		indent := strings.Repeat("    ", max(0, indentLevel))
+		indent := strings.Repeat("    ", indentLevel)
 		formattedLine := formatStylishLine(trimmed, indent)
 		result = append(result, formattedLine)
-		if strings.HasSuffix(trimmed, "{") {
+		if trimmed == "{" || strings.HasSuffix(trimmed, "{") {
 			indentLevel++
 		}
 	}
@@ -31,27 +31,33 @@ func FormatDiffOutputStylish(input string) string {
 func formatStylishLine(line string, indent string) string {
 	cleanedLine := strings.TrimSpace(line)
 	cleanedLine = strings.ReplaceAll(cleanedLine, "<nil>", "null")
-
-	if cleanedLine == "{" || cleanedLine == "}" {
+	if strings.HasSuffix(cleanedLine, ": ") {
+		cleanedLine = strings.TrimSuffix(cleanedLine, " ")
+	}
+	switch {
+	case cleanedLine == "{" || cleanedLine == "}":
 		return indent + cleanedLine
-	} else if strings.HasPrefix(cleanedLine, "+ ") {
+
+	case strings.HasPrefix(cleanedLine, "+ "):
 		content := strings.TrimPrefix(cleanedLine, "+ ")
-		if strings.Contains(content, ": {") || strings.Contains(content, ": +") {
-			content = strings.ReplaceAll(content, ": +", ": ")
-			content = strings.ReplaceAll(content, "+ ", "")
+		if strings.Contains(content, ": {") {
+			parts := strings.SplitN(content, ": {", 2)
+			return indent + "+ " + parts[0] + ": {" + parts[1]
 		}
 		return indent + "+ " + content
-	} else if strings.HasPrefix(cleanedLine, "- ") {
+
+	case strings.HasPrefix(cleanedLine, "- "):
 		content := strings.TrimPrefix(cleanedLine, "- ")
-		if strings.Contains(content, ": {") || strings.Contains(content, ": -") {
-			content = strings.ReplaceAll(content, ": -", ": ")
-			content = strings.ReplaceAll(content, "- ", "")
+		if strings.Contains(content, ": {") {
+			parts := strings.SplitN(content, ": {", 2)
+			return indent + "- " + parts[0] + ": {" + parts[1]
 		}
 		return indent + "- " + content
-	} else {
-		cleanedLine = strings.ReplaceAll(cleanedLine, "+ ", "")
-		cleanedLine = strings.ReplaceAll(cleanedLine, "- ", "")
-		return indent + cleanedLine
+
+	default:
+		content := strings.TrimPrefix(cleanedLine, "+ ")
+		content = strings.TrimPrefix(content, "- ")
+		return indent + content
 	}
 }
 
