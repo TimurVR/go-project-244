@@ -21,9 +21,6 @@ func FormatDiffOutputStylish(diffOutput string) string {
 			continue
 		}
 
-		// Заменяем <nil> на null
-		trimmed = strings.ReplaceAll(trimmed, "<nil>", "null")
-
 		// Базовый отступ - 4 пробела на уровень глубины
 		baseIndent := strings.Repeat("    ", depth)
 
@@ -39,7 +36,9 @@ func FormatDiffOutputStylish(diffOutput string) string {
 
 		// Обработка открывающих скобок объектов
 		if strings.HasSuffix(trimmed, "{") {
-			var prefix, content string
+			// Определяем префикс на основе начала строки
+			var prefix string
+			var content string
 
 			if strings.HasPrefix(trimmed, "- ") {
 				prefix = "  - "
@@ -52,22 +51,18 @@ func FormatDiffOutputStylish(diffOutput string) string {
 				content = strings.TrimSuffix(trimmed, " {")
 			}
 
-			// Убираем двоеточие из content, если оно уже есть
-			content = strings.TrimSuffix(content, ":")
 			result = append(result, baseIndent+prefix+content+": {")
 			depth++
 			continue
 		}
 
-		// Обработка обычных свойств - сохраняем оригинальные префиксы
+		// Для обычных строк просто добавляем отступы, сохраняя оригинальные префиксы
+		// Определяем нужный отступ based on prefix
 		if strings.HasPrefix(trimmed, "- ") {
-			content := strings.TrimPrefix(trimmed, "- ")
-			result = append(result, baseIndent+"  - "+content)
+			result = append(result, baseIndent+"  - "+strings.TrimPrefix(trimmed, "- "))
 		} else if strings.HasPrefix(trimmed, "+ ") {
-			content := strings.TrimPrefix(trimmed, "+ ")
-			result = append(result, baseIndent+"  + "+content)
+			result = append(result, baseIndent+"  + "+strings.TrimPrefix(trimmed, "+ "))
 		} else {
-			// Для строк без префиксов добавляем 4 пробела вместо префикса
 			result = append(result, baseIndent+"    "+trimmed)
 		}
 	}
