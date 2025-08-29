@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -61,90 +62,112 @@ func GenDiff(file1 string, file2 string, style string) (string, error) {
 	return str, nil
 }
 func GenDifference(map1, map2 map[string]interface{}) (string, error) {
-	keys := []string{}
-	for key := range map1 {
-		keys = append(keys, key)
-	}
-	for key := range map2 {
-		_, exist := map1[key]
-		if !exist {
-			keys = append(keys, key)
-		}
-	}
+	return genDiffRecursive(map1, map2, 0)
+}
+
+func genDiffRecursive(map1, map2 map[string]interface{}, depth int) (string, error) {
+	indent := strings.Repeat("    ", depth)
+	keys := getUniqueKeys(map1, map2)
 	sort.Strings(keys)
-	str := "{\n"
+
+	var result strings.Builder
+	result.WriteString("{\n")
+
 	for _, key := range keys {
 		value1, exist1 := map1[key]
 		value2, exist2 := map2[key]
-		isValue1Object := false
-		isValue2Object := false
-		if exist1 && value1 != nil {
-			if _, ok := value1.(map[string]interface{}); ok {
-				isValue1Object = true
-			}
-		}
-		if exist2 && value2 != nil {
-			if _, ok := value2.(map[string]interface{}); ok {
-				isValue2Object = true
-			}
-		}
-		if isValue1Object && isValue2Object {
-			temp, err := GenDifference(value1.(map[string]interface{}), value2.(map[string]interface{}))
+
+		isValue1Object := isMap(value1)
+		isValue2Object := isMap(value2)
+
+		switch {
+		case isValue1Object && isValue2Object:
+			nestedDiff, err := genDiffRecursive(
+				value1.(map[string]interface{}),
+				value2.(map[string]interface{}),
+				depth+1,
+			)
 			if err != nil {
 				return "", err
 			}
-			str += fmt.Sprintf("    %s: %s\n", key, temp)
-			continue
-		}
-		if isValue1Object && !isValue2Object {
-			emptyMap := make(map[string]interface{})
-			if exist2 {
-				temp, err := GenDifference(value1.(map[string]interface{}), emptyMap)
-				if err != nil {
-					return "", err
-				}
-				str += fmt.Sprintf("  - %s: %s\n", key, temp)
-				str += fmt.Sprintf("  + %s: %v\n", key, value2)
-			} else {
-				temp, err := GenDifference(value1.(map[string]interface{}), emptyMap)
-				if err != nil {
-					return "", err
-				}
-				str += fmt.Sprintf("  - %s: %s\n", key, temp)
+			result.WriteString(fmt.Sprintf("%s    %s: %s\n", indent, key, nestedDiff))
+
+		case isValue1Object && !isValue2Object:
+			nestedDiff, err := genDiffRecursive(
+				value1.(map[string]interface{}),
+				map[string]interface{}{},
+				depth+1,
+			)
+			if err != nil {
+				return "", err
 			}
-			continue
-		}
-		if !isValue1Object && isValue2Object {
-			emptyMap := make(map[string]interface{})
+			result.WriteString(fmt.Sprintf("%s  - %s: %s\n", indent, key, nestedDiff))
+			result.WriteString(fmt.Sprintf("%s  + %s: %v\n", indent, key, formatValue(value2)))
+
+		case !isValue1Object && isValue2Object:
+			nestedDiff, err := genDiffRecursive(
+				map[string]interface{}{},
+				value2.(map[string]interface{}),
+				depth+1,
+			)
+			if err != nil {
+				return "", err
+			}
 			if exist1 {
-				str += fmt.Sprintf("  - %s: %v\n", key, value1)
-				temp, err := GenDifference(emptyMap, value2.(map[string]interface{}))
-				if err != nil {
-					return "", err
-				}
-				str += fmt.Sprintf("  + %s: %s\n", key, temp)
-			} else {
-				temp, err := GenDifference(emptyMap, value2.(map[string]interface{}))
-				if err != nil {
-					return "", err
-				}
-				str += fmt.Sprintf("  + %s: %s\n", key, temp)
+				result.WriteString(fmt.Sprintf("%s  - %s: %v\n", indent, key, formatValue(value1)))
 			}
-			continue
-		}
-		if exist1 && exist2 {
-			if value1 == value2 {
-				str += fmt.Sprintf("    %s: %v\n", key, value1)
-			} else {
-				str += fmt.Sprintf("  - %s: %v\n", key, value1)
-				str += fmt.Sprintf("  + %s: %v\n", key, value2)
+			result.WriteString(fmt.Sprintf("%s  + %s: %s\n", indent, key, nestedDiff))
+
+		default:
+			if exist1 && exist2 {
+				if equalValues(value1, value2) {
+					result.WriteString(fmt.Sprintf("%s    %s: %v\n", indent, key, formatValue(value1)))
+				} else {
+					result.WriteString(fmt.Sprintf("%s  - %s: %v\n", indent, key, formatValue(value1)))
+					result.WriteString(fmt.Sprintf("%s  + %s: %v\n", indent, key, formatValue(value2)))
+				}
+			} else if exist1 {
+				result.WriteString(fmt.Sprintf("%s  - %s: %v\n", indent, key, formatValue(value1)))
+			} else if exist2 {
+				result.WriteString(fmt.Sprintf("%s  + %s: %v\n", indent, key, formatValue(value2)))
 			}
-		} else if exist1 && !exist2 {
-			str += fmt.Sprintf("  - %s: %v\n", key, value1)
-		} else if !exist1 && exist2 {
-			str += fmt.Sprintf("  + %s: %v\n", key, value2)
 		}
 	}
-	str += "}"
-	return str, nil
+
+	result.WriteString(fmt.Sprintf("%s}", indent))
+	return result.String(), nil
+}
+func getUniqueKeys(map1, map2 map[string]interface{}) []string {
+	keysMap := make(map[string]bool)
+	for key := range map1 {
+		keysMap[key] = true
+	}
+	for key := range map2 {
+		keysMap[key] = true
+	}
+
+	keys := make([]string, 0, len(keysMap))
+	for key := range keysMap {
+		keys = append(keys, key)
+	}
+	return keys
+}
+
+func isMap(value interface{}) bool {
+	if value == nil {
+		return false
+	}
+	_, ok := value.(map[string]interface{})
+	return ok
+}
+
+func equalValues(v1, v2 interface{}) bool {
+	return fmt.Sprintf("%v", v1) == fmt.Sprintf("%v", v2)
+}
+
+func formatValue(value interface{}) string {
+	if value == nil {
+		return "null"
+	}
+	return fmt.Sprintf("%v", value)
 }
