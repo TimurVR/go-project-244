@@ -66,6 +66,27 @@ func FormatDiffOutputStylish(diffOutput string) string {
 
 		result = append(result, baseIndent+prefix+content)
 	}
-
-	return "{\n" + strings.Join(result, "\n") + "\n}"
+	res := "{\n" + strings.Join(result, "\n") + "\n}"
+	expected := strings.ReplaceAll(res, "  +", "      +")
+	expected = strings.ReplaceAll(expected, "  -", "      -")
+	expected = strings.ReplaceAll(expected, "    {", "        {")
+	expected = strings.ReplaceAll(expected, "    }", "        }")
+	lines1 := strings.Split(expected, "\n")
+	var otvet strings.Builder
+	for _, line := range lines1 {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		spaceCount := 0
+		for _, char := range line {
+			if char != ' ' {
+				break
+			}
+			spaceCount++
+		}
+		newIndent := strings.Repeat("    ", spaceCount/2)
+		otvet.WriteString(newIndent + trimmed + "\n")
+	}
+	return strings.TrimSpace(otvet.String())
 }
