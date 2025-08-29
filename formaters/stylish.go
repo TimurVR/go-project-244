@@ -7,64 +7,40 @@ import (
 func FormatDiffOutputStylish(input string) string {
 	lines := strings.Split(input, "\n")
 	var result []string
-	indentLevel := 0
+	result = append(result, "{")
 
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "" {
 			continue
 		}
-		if strings.HasPrefix(trimmed, "}") || (strings.Contains(trimmed, "}") && !strings.Contains(trimmed, "{")) {
-			indentLevel = max(0, indentLevel-1)
+		var lineType string
+		var content string
+
+		if strings.HasPrefix(trimmed, "- ") {
+			lineType = "removed"
+			content = strings.TrimPrefix(trimmed, "- ")
+		} else if strings.HasPrefix(trimmed, "+ ") {
+			lineType = "added"
+			content = strings.TrimPrefix(trimmed, "+ ")
+		} else {
+			lineType = "unchanged"
+			content = trimmed
 		}
-		indent := strings.Repeat("    ", indentLevel)
-		formattedLine := formatStylishLine(trimmed, indent)
+		var formattedLine string
+
+		switch lineType {
+		case "added":
+			formattedLine = "  + " + content
+		case "removed":
+			formattedLine = "  - " + content
+		case "unchanged":
+			formattedLine = "    " + content
+		}
+
 		result = append(result, formattedLine)
-		if strings.HasSuffix(trimmed, "{") {
-			indentLevel++
-		}
 	}
+	result = append(result, "}")
 
 	return strings.Join(result, "\n")
-}
-
-func formatStylishLine(line string, indent string) string {
-	cleanedLine := strings.TrimSpace(line)
-	cleanedLine = strings.ReplaceAll(cleanedLine, "<nil>", "null")
-	if strings.Contains(cleanedLine, ": {") {
-		if strings.HasPrefix(cleanedLine, "+ ") {
-			content := strings.TrimPrefix(cleanedLine, "+ ")
-			return indent + "+ " + removeInnerPrefixes(content)
-		} else if strings.HasPrefix(cleanedLine, "- ") {
-			content := strings.TrimPrefix(cleanedLine, "- ")
-			return indent + "- " + removeInnerPrefixes(content)
-		} else {
-			return indent + removeInnerPrefixes(cleanedLine)
-		}
-	}
-	if cleanedLine == "{" || cleanedLine == "}" {
-		return indent + cleanedLine
-	} else if strings.HasPrefix(cleanedLine, "+ ") {
-		content := strings.TrimPrefix(cleanedLine, "+ ")
-		return indent + "+ " + content
-	} else if strings.HasPrefix(cleanedLine, "- ") {
-		content := strings.TrimPrefix(cleanedLine, "- ")
-		return indent + "- " + content
-	} else {
-		return indent + cleanedLine
-	}
-}
-func removeInnerPrefixes(content string) string {
-	content = strings.ReplaceAll(content, ": + ", ": ")
-	content = strings.ReplaceAll(content, ": - ", ": ")
-	content = strings.ReplaceAll(content, "+ ", "")
-	content = strings.ReplaceAll(content, "- ", "")
-	return content
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }

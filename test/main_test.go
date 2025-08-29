@@ -13,7 +13,7 @@ func TestGenDiffEmptyfilesJson(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n}", ex1, "Empty files")
+	require.Equal(t, "", ex1, "Empty files")
 }
 
 func TestGenDiffSimpleFilesWithSomeDifferencesJson(t *testing.T) {
@@ -21,28 +21,28 @@ func TestGenDiffSimpleFilesWithSomeDifferencesJson(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n    a: 1\n  - b: test\n  + b: test2\n  - c: true\n  + d: false\n}", ex1, "FilesWithSomeDifferencesJson")
+	require.Equal(t, "    a: 1\n  - b: test\n  + b: test2\n  - c: true\n  + d: false\n", ex1, "FilesWithSomeDifferencesJson")
 }
 func TestGenDiffFirstFileEmptySecondWithDataJson(t *testing.T) {
 	ex1, err := code.GenDiff("../testdata/json/file1_empty.json", "../testdata/json/file1_simple.json", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n  + a: 1\n  + b: test\n  + c: true\n}", ex1, "FileEmptySecondWithDataJson")
+	require.Equal(t, "  + a: 1\n  + b: test\n  + c: true\n", ex1, "FileEmptySecondWithDataJson")
 }
 func TestGenDiffFirstFileWithDataSecondEmptyJson(t *testing.T) {
 	ex1, err := code.GenDiff("../testdata/json/file1_simple.json", "../testdata/json/file1_empty.json", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n  - a: 1\n  - b: test\n  - c: true\n}", ex1, "FirstFileWithDataSecondEmptyJson")
+	require.Equal(t, "  - a: 1\n  - b: test\n  - c: true\n", ex1, "FirstFileWithDataSecondEmptyJson")
 }
 func TestGenDiffmnJSON(t *testing.T) {
 	ex1, err := code.GenDiff("../testdata/json/file1_mn.json", "../testdata/json/file1_mn.json", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n    common: {\n        setting1: Value 1\n        setting2: 200\n        setting3: true\n        setting6: {\n            doge: {\n                wow: \n            }\n            key: value\n        }\n    }\n    group1: {\n        baz: bas\n        foo: bar\n        nest: {\n            key: value\n        }\n    }\n    group2: {\n        abc: 12345\n        deep: {\n            id: 45\n        }\n    }\n}", ex1, "mnJSON")
+	require.Equal(t, "    common: {\n        setting1: Value 1\n        setting2: 200\n        setting3: true\n        setting6: {\n            doge: {\n                wow: \n            }\n            key: value\n        }\n    }\n    group1: {\n        baz: bas\n        foo: bar\n        nest: {\n            key: value\n        }\n    }\n    group2: {\n        abc: 12345\n        deep: {\n            id: 45\n        }\n    }\n", ex1, "mnJSON")
 }
 
 // yml
@@ -51,7 +51,7 @@ func TestGenDiffEmptyfilesyml(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n}", ex1, "Empty files")
+	require.Equal(t, "", ex1, "Empty files")
 }
 
 func TestGenDiffSimpleFilesWithSomeDifferencesyml(t *testing.T) {
@@ -59,28 +59,28 @@ func TestGenDiffSimpleFilesWithSomeDifferencesyml(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n    a: 1\n  - b: test\n  + b: test2\n  - c: true\n  + d: false\n}", ex1, "FilesWithSomeDifferencesyml")
+	require.Equal(t, "    a: 1\n  - b: test\n  + b: test2\n  - c: true\n  + d: false\n", ex1, "FilesWithSomeDifferencesyml")
 }
 func TestGenDiffFirstFileEmptySecondWithDatayml(t *testing.T) {
 	ex1, err := code.GenDiff("../testdata/yml/file1_empty.yml", "../testdata/yml/file1_simple.yml", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n  + a: 1\n  + b: test\n  + c: true\n}", ex1, "FileEmptySecondWithDatayml")
+	require.Equal(t, "  + a: 1\n  + b: test\n  + c: true\n", ex1, "FileEmptySecondWithDatayml")
 }
 func TestGenDiffFirstFileWithDataSecondEmptyyml(t *testing.T) {
 	ex1, err := code.GenDiff("../testdata/yml/file1_simple.yml", "../testdata/yml/file1_empty.yml", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n  - a: 1\n  - b: test\n  - c: true\n}", ex1, "FirstFileWithDataSecondEmptyyml")
+	require.Equal(t, "  - a: 1\n  - b: test\n  - c: true\n", ex1, "FirstFileWithDataSecondEmptyyml")
 }
 func TestGenDiffmnyml(t *testing.T) {
 	ex1, err := code.GenDiff("../testdata/yml/file1_mn.yml", "../testdata/yml/file1_mn.yml", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n    common: {\n        setting1: Value 1\n        setting2: 200\n        setting3: true\n        setting6: {\n            doge: {\n                wow: \n            }\n            key: value\n        }\n    }\n    group1: {\n        baz: bas\n        foo: bar\n        nest: {\n            key: value\n        }\n    }\n    group2: {\n        abc: 12345\n        deep: {\n            id: 45\n        }\n    }\n}", ex1, "mnyml")
+	require.Equal(t, "    common: {\n        setting1: Value 1\n        setting2: 200\n        setting3: true\n        setting6: {\n            doge: {\n                wow: \n            }\n            key: value\n        }\n    }\n    group1: {\n        baz: bas\n        foo: bar\n        nest: {\n            key: value\n        }\n    }\n    group2: {\n        abc: 12345\n        deep: {\n            id: 45\n        }\n    }\n", ex1, "mnyml")
 }
 
 // formats
@@ -122,12 +122,12 @@ func TestGenDiffSimpleStylishJson(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n    a: 1\n    - b: test\n    + b: test2\n    - c: true\n    + d: false\n}", ex1, "TestGenDiffSimpleJsonJson")
+	require.Equal(t, "{\n    a: 1\n  - b: test\n  + b: test2\n  - c: true\n  + d: false\n}", ex1, "TestGenDiffSimpleJsonJson")
 }
 func TestGenDiffSimpleStylishYml(t *testing.T) {
 	ex1, err := code.GenDiff("../testdata/yml/file1_simple.yml", "../testdata/yml/file2_simple.yml", "stylish")
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n    a: 1\n    - b: test\n    + b: test2\n    - c: true\n    + d: false\n}", ex1, "TestGenDiffSimpleymlyml")
+	require.Equal(t, "{\n    a: 1\n  - b: test\n  + b: test2\n  - c: true\n  + d: false\n}", ex1, "TestGenDiffSimpleymlyml")
 }

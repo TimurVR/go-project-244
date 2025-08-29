@@ -62,16 +62,18 @@ func GenDiff(file1 string, file2 string, style string) (string, error) {
 	return str, nil
 }
 func GenDifference(map1, map2 map[string]interface{}) (string, error) {
-	return genDiffRecursive(map1, map2, 0)
+	return genDiffRecursive(map1, map2, 0, true)
 }
 
-func genDiffRecursive(map1, map2 map[string]interface{}, depth int) (string, error) {
+func genDiffRecursive(map1, map2 map[string]interface{}, depth int, isRoot bool) (string, error) {
 	indent := strings.Repeat("    ", depth)
 	keys := getUniqueKeys(map1, map2)
 	sort.Strings(keys)
 
 	var result strings.Builder
-	result.WriteString("{\n")
+	if !isRoot {
+		result.WriteString("{\n")
+	}
 
 	for _, key := range keys {
 		value1, exist1 := map1[key]
@@ -80,61 +82,73 @@ func genDiffRecursive(map1, map2 map[string]interface{}, depth int) (string, err
 		isValue1Object := isMap(value1)
 		isValue2Object := isMap(value2)
 
+		lineIndent := indent
+		if depth > 0 {
+			lineIndent = strings.Repeat("    ", depth)
+		}
+
 		switch {
 		case isValue1Object && isValue2Object:
 			nestedDiff, err := genDiffRecursive(
 				value1.(map[string]interface{}),
 				value2.(map[string]interface{}),
 				depth+1,
+				false,
 			)
 			if err != nil {
 				return "", err
 			}
-			result.WriteString(fmt.Sprintf("%s    %s: %s\n", indent, key, nestedDiff))
+			result.WriteString(fmt.Sprintf("%s    %s: %s\n", lineIndent, key, nestedDiff))
 
 		case isValue1Object && !isValue2Object:
 			nestedDiff, err := genDiffRecursive(
 				value1.(map[string]interface{}),
 				map[string]interface{}{},
 				depth+1,
+				false,
 			)
 			if err != nil {
 				return "", err
 			}
-			result.WriteString(fmt.Sprintf("%s  - %s: %s\n", indent, key, nestedDiff))
-			result.WriteString(fmt.Sprintf("%s  + %s: %v\n", indent, key, formatValue(value2)))
+			result.WriteString(fmt.Sprintf("%s  - %s: %s\n", lineIndent, key, nestedDiff))
+			if exist2 {
+				result.WriteString(fmt.Sprintf("%s  + %s: %v\n", lineIndent, key, formatValue(value2)))
+			}
 
 		case !isValue1Object && isValue2Object:
+			if exist1 {
+				result.WriteString(fmt.Sprintf("%s  - %s: %v\n", lineIndent, key, formatValue(value1)))
+			}
 			nestedDiff, err := genDiffRecursive(
 				map[string]interface{}{},
 				value2.(map[string]interface{}),
 				depth+1,
+				false,
 			)
 			if err != nil {
 				return "", err
 			}
-			if exist1 {
-				result.WriteString(fmt.Sprintf("%s  - %s: %v\n", indent, key, formatValue(value1)))
-			}
-			result.WriteString(fmt.Sprintf("%s  + %s: %s\n", indent, key, nestedDiff))
+			result.WriteString(fmt.Sprintf("%s  + %s: %s\n", lineIndent, key, nestedDiff))
 
 		default:
 			if exist1 && exist2 {
 				if equalValues(value1, value2) {
-					result.WriteString(fmt.Sprintf("%s    %s: %v\n", indent, key, formatValue(value1)))
+					result.WriteString(fmt.Sprintf("%s    %s: %v\n", lineIndent, key, formatValue(value1)))
 				} else {
-					result.WriteString(fmt.Sprintf("%s  - %s: %v\n", indent, key, formatValue(value1)))
-					result.WriteString(fmt.Sprintf("%s  + %s: %v\n", indent, key, formatValue(value2)))
+					result.WriteString(fmt.Sprintf("%s  - %s: %v\n", lineIndent, key, formatValue(value1)))
+					result.WriteString(fmt.Sprintf("%s  + %s: %v\n", lineIndent, key, formatValue(value2)))
 				}
 			} else if exist1 {
-				result.WriteString(fmt.Sprintf("%s  - %s: %v\n", indent, key, formatValue(value1)))
+				result.WriteString(fmt.Sprintf("%s  - %s: %v\n", lineIndent, key, formatValue(value1)))
 			} else if exist2 {
-				result.WriteString(fmt.Sprintf("%s  + %s: %v\n", indent, key, formatValue(value2)))
+				result.WriteString(fmt.Sprintf("%s  + %s: %v\n", lineIndent, key, formatValue(value2)))
 			}
 		}
 	}
 
-	result.WriteString(fmt.Sprintf("%s}", indent))
+	if !isRoot {
+		result.WriteString(fmt.Sprintf("%s}", indent))
+	}
 	return result.String(), nil
 }
 func getUniqueKeys(map1, map2 map[string]interface{}) []string {
@@ -150,6 +164,7 @@ func getUniqueKeys(map1, map2 map[string]interface{}) []string {
 	for key := range keysMap {
 		keys = append(keys, key)
 	}
+	sort.Strings(keys)
 	return keys
 }
 
@@ -162,12 +177,21 @@ func isMap(value interface{}) bool {
 }
 
 func equalValues(v1, v2 interface{}) bool {
+	if v1 == nil && v2 == nil {
+		return true
+	}
+	if v1 == nil || v2 == nil {
+		return false
+	}
 	return fmt.Sprintf("%v", v1) == fmt.Sprintf("%v", v2)
 }
 
 func formatValue(value interface{}) string {
 	if value == nil {
 		return "null"
+	}
+	if s, ok := value.(string); ok {
+		return s
 	}
 	return fmt.Sprintf("%v", value)
 }
