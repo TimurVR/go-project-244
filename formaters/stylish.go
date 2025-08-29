@@ -1,39 +1,59 @@
 package code
 
 import (
-	"fmt"
 	"strings"
 )
 
 func FormatDiffOutputStylish(diffOutput string) string {
-	lines := strings.Split(diffOutput, "\n")
+	trimmedOutput := strings.TrimSpace(diffOutput)
+	if strings.HasPrefix(trimmedOutput, "{") && strings.HasSuffix(trimmedOutput, "}") {
+		trimmedOutput = strings.TrimSpace(trimmedOutput[1 : len(trimmedOutput)-1])
+	}
+	lines := strings.Split(trimmedOutput, "\n")
 	var result []string
 	depth := 0
+
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
-		if strings.Contains(trimmed, "}") {
-			depth--
-		}
 		if trimmed == "" {
 			continue
 		}
-		dotIndent := strings.Repeat(" ", depth*2)
+		baseIndent := strings.Repeat("    ", depth)
+		if trimmed == "}" {
+			if depth > 0 {
+				depth--
+			}
+			baseIndent = strings.Repeat("    ", depth)
+			result = append(result, baseIndent+"}")
+			continue
+		}
+		if strings.HasSuffix(trimmed, "{") {
+			var prefix, content string
+
+			if strings.HasPrefix(trimmed, "- ") {
+				prefix = "  - "
+				content = strings.TrimSuffix(strings.TrimPrefix(trimmed, "- "), " {")
+			} else if strings.HasPrefix(trimmed, "+ ") {
+				prefix = "  + "
+				content = strings.TrimSuffix(strings.TrimPrefix(trimmed, "+ "), " {")
+			} else {
+				prefix = "    "
+				content = strings.TrimSuffix(trimmed, " {")
+			}
+
+			result = append(result, baseIndent+prefix+content+": {")
+			depth++
+			continue
+		}
 		if strings.HasPrefix(trimmed, "- ") {
 			content := strings.TrimPrefix(trimmed, "- ")
-			result = append(result, fmt.Sprintf("%s- %s", dotIndent, content))
+			result = append(result, baseIndent+"  - "+content)
 		} else if strings.HasPrefix(trimmed, "+ ") {
 			content := strings.TrimPrefix(trimmed, "+ ")
-			result = append(result, fmt.Sprintf("%s+ %s", dotIndent, content))
-		} else if strings.Contains(trimmed, ":") {
-			result = append(result, fmt.Sprintf("%s%s", dotIndent, trimmed))
-		} else if trimmed == "{" {
-			result = append(result, fmt.Sprintf("%s{", dotIndent))
-		} else if trimmed == "}" {
-			result = append(result, fmt.Sprintf("%s}", dotIndent))
-		}
-		if strings.Contains(trimmed, "{") {
-			depth++
+			result = append(result, baseIndent+"  + "+content)
+		} else {
+			result = append(result, baseIndent+"    "+trimmed)
 		}
 	}
-	return strings.Join(result, "\n")
+	return "{\n" + strings.Join(result, "\n") + "\n}"
 }
