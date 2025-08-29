@@ -12,27 +12,31 @@ func FormatDiffOutputStylish(diffOutput string) string {
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "}" {
-			depth--
+			if depth > 0 {
+				depth--
+			}
+			indent := strings.Repeat("    ", depth)
+			result = append(result, fmt.Sprintf("%s}", indent))
+			continue
 		}
 		if trimmed == "" {
 			continue
 		}
 		indent := strings.Repeat("    ", depth)
-		if strings.HasPrefix(trimmed, "- ") {
+		switch {
+		case strings.HasPrefix(trimmed, "- "):
 			content := strings.TrimPrefix(trimmed, "- ")
 			result = append(result, fmt.Sprintf("%s  - %s", indent, content))
-		} else if strings.HasPrefix(trimmed, "+ ") {
+		case strings.HasPrefix(trimmed, "+ "):
 			content := strings.TrimPrefix(trimmed, "+ ")
 			result = append(result, fmt.Sprintf("%s  + %s", indent, content))
-		} else if strings.Contains(trimmed, ":") && !strings.HasPrefix(trimmed, "- ") && !strings.HasPrefix(trimmed, "+ ") {
-			result = append(result, fmt.Sprintf("%s    %s", indent, trimmed))
-		} else if trimmed == "{" {
+		case trimmed == "{":
 			result = append(result, fmt.Sprintf("%s{", indent))
-		} else if trimmed == "}" {
-			result = append(result, fmt.Sprintf("%s}", indent))
-		}
-		if trimmed == "{" {
 			depth++
+		case strings.Contains(trimmed, ":") && !strings.HasPrefix(trimmed, "- ") && !strings.HasPrefix(trimmed, "+ "):
+			result = append(result, fmt.Sprintf("%s    %s", indent, trimmed))
+		default:
+			result = append(result, fmt.Sprintf("%s%s", indent, trimmed))
 		}
 	}
 	return strings.Join(result, "\n")
