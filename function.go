@@ -133,7 +133,7 @@ func genDifference(map1, map2 map[string]interface{}, indentLevel int) string {
         }
     }
     str += indent + "}"
-    str = strings.Replace(str, "<nil>", "null", -1)
+    str = strings.ReplaceAll(str, "<nil>", "null")
     return str
 }
 

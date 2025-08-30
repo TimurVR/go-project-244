@@ -93,10 +93,10 @@ func buildCommonFromDifferences(differences []map[string]interface{}, result *ma
 	finalValues := make(map[string]interface{})
 	for _, diff := range differences {
 		key := diff["key"].(string)
-
-		if diff["type"] == "added" {
+		switch diff["type"]{
+		case "added":
 			finalValues[key] = diff["newValue"]
-		} else if diff["type"] == "removed" {
+		case "removed":
 			delete(finalValues, key)
 		}
 	}
