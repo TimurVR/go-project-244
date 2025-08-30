@@ -31,5 +31,6 @@ func FormatDiffOutputStylish(diffOutput string) string {
 			depth++
 		}
 	}
-	return strings.Join(result, "\n")
+	res:=strings.Replace(strings.Join(result, "\n"),"<nil>","null",-1)
+	return res
 }

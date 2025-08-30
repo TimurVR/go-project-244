@@ -3,7 +3,6 @@ package code
 import (
 	"code"
 	"testing"
-
 	"github.com/stretchr/testify/require"
 )
 
