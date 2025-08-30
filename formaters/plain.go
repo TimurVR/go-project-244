@@ -2,195 +2,102 @@ package code
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
+	"sort"
 )
 
-func FormatDiffOutput(diffOutput string) string {
-	lines := strings.Split(diffOutput, "\n")
-	changes := make(map[string]ChangeInfo)
-	var currentPath []string
-	stack := []map[string]interface{}{}
-
-	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if trimmed == "" {
-			continue
-		}
-
-		if trimmed == "{" {
-			stack = append(stack, make(map[string]interface{}))
-			continue
-		}
-
-		if trimmed == "}" {
-			if len(stack) > 0 {
-				stack = stack[:len(stack)-1]
-			}
-			if len(currentPath) > 0 {
-				currentPath = currentPath[:len(currentPath)-1]
-			}
-			continue
-		}
-
-		if strings.Contains(trimmed, ":") {
-			parts := strings.SplitN(trimmed, ":", 2)
-			key := strings.TrimSpace(parts[0])
-			value := strings.TrimSpace(parts[1])
-
-			operation := "unchanged"
-			cleanKey := key
-
-			if strings.HasPrefix(key, "+ ") {
-				operation = "added"
-				cleanKey = strings.TrimPrefix(key, "+ ")
-			} else if strings.HasPrefix(key, "- ") {
-				operation = "removed"
-				cleanKey = strings.TrimPrefix(key, "- ")
-			}
-
-			fullPath := buildPath(append(currentPath, cleanKey))
-
-			// Обработка вложенных объектов
-			if value == "{" {
-				if operation == "added" {
-					changes[fullPath] = ChangeInfo{
-						Operation: "added",
-						Value:     "[complex value]",
-						IsComplex: true,
-					}
-				} else if operation == "removed" {
-					changes[fullPath] = ChangeInfo{
-						Operation: "removed",
-						Value:     "",
-						IsComplex: true,
-					}
-				} else {
-					// Для неизмененных сложных объектов просто продолжаем путь
-					currentPath = append(currentPath, cleanKey)
-					stack = append(stack, make(map[string]interface{}))
-					continue
-				}
-				currentPath = append(currentPath, cleanKey)
-				stack = append(stack, make(map[string]interface{}))
-				continue
-			}
-
-			// Обработка простых значений
-			if operation != "unchanged" {
-				// Проверяем, есть ли противоположная операция для этого пути
-				if existing, exists := changes[fullPath]; exists {
-					if (existing.Operation == "added" && operation == "removed") ||
-						(existing.Operation == "removed" && operation == "added") {
-						// Это обновление значения
-						fromValue := existing.Value
-						if existing.Operation == "removed" {
-							fromValue = existing.Value
-						}
-						changes[fullPath] = ChangeInfo{
-							Operation: "updated",
-							OldValue:  fromValue,
-							Value:     value,
-							IsComplex: false,
-						}
-					}
-				} else {
-					// Новая операция
-					changes[fullPath] = ChangeInfo{
-						Operation: operation,
-						Value:     value,
-						IsComplex: false,
-					}
-				}
-			}
-		}
-	}
-
-	return formatChanges(changes)
+func GenDifferencePlain(map1, map2 map[string]interface{}) string {
+    return buildPlainDiff(map1, map2, []string{})
 }
 
-func formatChanges(changes map[string]ChangeInfo) string {
-	var result []string
-	processed := make(map[string]bool)
+func buildPlainDiff(map1, map2 map[string]interface{}, path []string) string {
+    var result []string
+    allKeys := make(map[string]bool)
+    for k := range map1 {
+        allKeys[k] = true
+    }
+    for k := range map2 {
+        allKeys[k] = true
+    }
+    keys := make([]string, 0, len(allKeys))
+    for k := range allKeys {
+        keys = append(keys, k)
+    }
+    sort.Strings(keys)
 
-	// Сначала обрабатываем обновления
-	for path, change := range changes {
-		if change.Operation == "updated" {
-			fromValue := formatValue(change.OldValue, false)
-			toValue := formatValue(change.Value, false)
-			result = append(result, fmt.Sprintf("Property '%s' was updated. From %s to %s", path, fromValue, toValue))
-			processed[path] = true
-		}
-	}
+    for _, key := range keys {
+        currentPath := append([]string{}, path...)
+        currentPath = append(currentPath, key)
+        fullPath := strings.Join(currentPath, ".")
 
-	// Затем обрабатываем добавления и удаления
-	for path, change := range changes {
-		if processed[path] {
-			continue
-		}
+        value1, exists1 := map1[key]
+        value2, exists2 := map2[key]
 
-		// Пропускаем если родительский объект был удален/добавлен
-		if hasParentOperation(path, changes, "removed") && change.Operation == "removed" {
-			continue
-		}
-		if hasParentOperation(path, changes, "added") && change.Operation == "added" {
-			continue
-		}
+        if exists1 && exists2 {
+            if isNestedMap(value1) && isNestedMap(value2) {
+                nestedResult := buildPlainDiff(
+                    value1.(map[string]interface{}),
+                    value2.(map[string]interface{}),
+                    currentPath,
+                )
+                if nestedResult != "" {
+                    result = append(result, nestedResult)
+                }
+            } else if !isEqual(value1, value2) {
+                fromValue := formatPlainValue(value1)
+                toValue := formatPlainValue(value2)
+                result = append(result, fmt.Sprintf("Property '%s' was updated. From %s to %s", fullPath, fromValue, toValue))
+            }
+        } else if exists1 && !exists2 {
+            result = append(result, fmt.Sprintf("Property '%s' was removed", fullPath))
+        } else if !exists1 && exists2 {
+            value := formatPlainValue(value2)
+            result = append(result, fmt.Sprintf("Property '%s' was added with value: %s", fullPath, value))
+        }
+    }
 
-		switch change.Operation {
-		case "added":
-			value := formatValue(change.Value, change.IsComplex)
-			result = append(result, fmt.Sprintf("Property '%s' was added with value: %s", path, value))
-		case "removed":
-			result = append(result, fmt.Sprintf("Property '%s' was removed", path))
-		}
-	}
-
-	sort.Strings(result)
-	return strings.Join(result, "\n")
+    return strings.Join(result, "\n")
 }
 
-func hasParentOperation(path string, changes map[string]ChangeInfo, operation string) bool {
-	parts := strings.Split(path, ".")
-	for i := len(parts) - 1; i > 0; i-- {
-		parentPath := strings.Join(parts[:i], ".")
-		if change, exists := changes[parentPath]; exists && change.Operation == operation {
-			return true
-		}
-	}
-	return false
+func isNestedMap(value interface{}) bool {
+    if value == nil {
+        return false
+    }
+    _, ok := value.(map[string]interface{})
+    return ok
 }
 
-func buildPath(path []string) string {
-	return strings.Join(path, ".")
+func formatPlainValue(value interface{}) string {
+    if value == nil {
+        return "null"
+    }
+    if isNestedMap(value) {
+        return "[complex value]"
+    }
+    switch v := value.(type) {
+    case string:
+        if v == "true" || v == "false" || v == "null" {
+            return v
+        }
+        if _, err := strconv.Atoi(v); err == nil {
+            return v
+        }
+        if _, err := strconv.ParseFloat(v, 64); err == nil {
+            return v
+        }
+        return "'" + v + "'"
+    default:
+        return fmt.Sprintf("%v", v)
+    }
 }
 
-func formatValue(value string, isComplex bool) string {
-	if isComplex {
-		return "[complex value]"
-	}
-	if value == "true" || value == "false" || value == "null" || value == "<nil>" {
-		if value == "<nil>" {
-			return "null"
-		}
-		return value
-	}
-	if strings.TrimSpace(value) == "" {
-		return "''"
-	}
-	if _, err := strconv.Atoi(value); err == nil {
-		return value
-	}
-	if _, err := strconv.ParseFloat(value, 64); err == nil {
-		return value
-	}
-	return fmt.Sprintf("'%s'", value)
-}
-
-type ChangeInfo struct {
-	Operation string
-	Value     string
-	OldValue  string
-	IsComplex bool
+func isEqual(a, b interface{}) bool {
+    if a == nil && b == nil {
+        return true
+    }
+    if a == nil || b == nil {
+        return false
+    }
+    return fmt.Sprintf("%v", a) == fmt.Sprintf("%v", b)
 }

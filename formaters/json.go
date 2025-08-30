@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func FormatDiffToJSON(input string) (string, error) {
+func FormatDiffToJSON(input string ) (string, error) {
 	lines := strings.Split(input, "\n")
 	result := map[string]interface{}{
 		"differences": []map[string]interface{}{},

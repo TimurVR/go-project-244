@@ -3,6 +3,7 @@ package code
 import (
 	"code"
 	"testing"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -41,7 +42,7 @@ func TestGenDiffmnJSON(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n    common: {\n    setting1: Value 1\n    setting2: 200\n    setting3: true\n    setting6: {\n    doge: {\n    wow: \n}\n    key: value\n}\n}\n    group1: {\n    baz: bas\n    foo: bar\n    nest: {\n    key: value\n}\n}\n    group2: {\n    abc: 12345\n    deep: {\n    id: 45\n}\n}\n}", ex1, "mnJSON")
+	require.Equal(t, "{\n    common: {\n        setting1: Value 1\n        setting2: 200\n        setting3: true\n        setting6: {\n            doge: {\n                wow: \n            }\n            key: value\n        }\n    }\n    group1: {\n        baz: bas\n        foo: bar\n        nest: {\n            key: value\n        }\n    }\n    group2: {\n        abc: 12345\n        deep: {\n            id: 45\n        }\n    }\n}", ex1, "mnJSON")
 }
 
 // yml
@@ -79,7 +80,7 @@ func TestGenDiffmnyml(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, "{\n    common: {\n    setting1: Value 1\n    setting2: 200\n    setting3: true\n    setting6: {\n    doge: {\n    wow: \n}\n    key: value\n}\n}\n    group1: {\n    baz: bas\n    foo: bar\n    nest: {\n    key: value\n}\n}\n    group2: {\n    abc: 12345\n    deep: {\n    id: 45\n}\n}\n}", ex1, "mnyml")
+	require.Equal(t, "{\n    common: {\n        setting1: Value 1\n        setting2: 200\n        setting3: true\n        setting6: {\n            doge: {\n                wow: \n            }\n            key: value\n        }\n    }\n    group1: {\n        baz: bas\n        foo: bar\n        nest: {\n            key: value\n        }\n    }\n    group2: {\n        abc: 12345\n        deep: {\n            id: 45\n        }\n    }\n}", ex1, "mnyml")
 }
 
 // formats

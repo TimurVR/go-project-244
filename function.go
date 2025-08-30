@@ -42,16 +42,19 @@ func GenDiff(file1 string, file2 string, style string) (string, error) {
 		return "", err
 	}
 	var str string
-	str= GenDifference(map1, map2)
+	
 	switch style {
 	case "json":
+		str=GenDifference(map1, map2)
 		temp, err := format.FormatDiffToJSON(str)
 		if err != nil {
 			return "", err
 		}
 		str = temp
 	case "plain":
-		str = format.FormatDiffOutput(str)
+		str = format.GenDifferencePlain(map1,map2)
+	default:
+		str= GenDifference(map1, map2)
 	}
 	return str, nil
 }
