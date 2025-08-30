@@ -59,58 +59,78 @@ func GenDiff(file1 string, file2 string, style string) (string, error) {
 	}
 	return str, nil
 }
+
 func GenDifference(map1, map2 map[string]interface{}) (string, error) {
+	return genDifference(map1, map2, 0)
+}
+
+func genDifference(map1, map2 map[string]interface{}, indentLevel int) (string, error) {
+	indent := strings.Repeat("    ", indentLevel)
+
 	keys := getUniqueKeys(map1, map2)
 	sort.Strings(keys)
 
 	var result strings.Builder
 	result.WriteString("{\n")
+
 	for _, key := range keys {
 		value1, exist1 := map1[key]
 		value2, exist2 := map2[key]
 		isNested1 := isNestedObject(value1)
 		isNested2 := isNestedObject(value2)
-		if isNested1 && isNested2 {
-			nestedDiff, err := GenDifference(value1.(map[string]interface{}), value2.(map[string]interface{}))
-			if err != nil {
-				return "", err
-			}
-			result.WriteString(fmt.Sprintf("    %s: %s\n", key, nestedDiff))
-		} else if isNested1 && !isNested2 {
-			nestedDiff, err := GenDifference(value1.(map[string]interface{}), map[string]interface{}{})
-			if err != nil {
-				return "", err
-			}
-			result.WriteString(fmt.Sprintf("  - %s: %s\n", key, nestedDiff))
-			if exist2 {
-				result.WriteString(fmt.Sprintf("  + %s: %v\n", key, value2))
-			}
-		} else if !isNested1 && isNested2 {
-			if exist1 {
-				result.WriteString(fmt.Sprintf("  - %s: %v\n", key, value1))
-			}
-			nestedDiff, err := GenDifference(map[string]interface{}{}, value2.(map[string]interface{}))
-			if err != nil {
-				return "", err
-			}
-			result.WriteString(fmt.Sprintf("  + %s: %s\n", key, nestedDiff))
-		} else {
-			if exist1 && exist2 {
-				if isEqual(value1, value2) {
-					result.WriteString(fmt.Sprintf("    %s: %v\n", key, value1))
-				} else {
-					result.WriteString(fmt.Sprintf("  - %s: %v\n", key, value1))
-					result.WriteString(fmt.Sprintf("  + %s: %v\n", key, value2))
+		if !exist1 && exist2 {
+			if isNested2 {
+				nestedDiff, err := genDifference(map[string]interface{}{}, value2.(map[string]interface{}), indentLevel+1)
+				if err != nil {
+					return "", err
 				}
-			} else if exist1 {
-				result.WriteString(fmt.Sprintf("  - %s: %v\n", key, value1))
-			} else if exist2 {
-				result.WriteString(fmt.Sprintf("  + %s: %v\n", key, value2))
+				result.WriteString(fmt.Sprintf("%s  + %s: %s\n", indent, key, nestedDiff))
+			} else {
+				result.WriteString(fmt.Sprintf("%s  + %s: %s\n", indent, key, formatValue(value2)))
+			}
+		} else if exist1 && !exist2 {
+			if isNested1 {
+				nestedDiff, err := genDifference(value1.(map[string]interface{}), map[string]interface{}{}, indentLevel+1)
+				if err != nil {
+					return "", err
+				}
+				result.WriteString(fmt.Sprintf("%s  - %s: %s\n", indent, key, nestedDiff))
+			} else {
+				result.WriteString(fmt.Sprintf("%s  - %s: %s\n", indent, key, formatValue(value1)))
+			}
+		} else {
+			if isNested1 && isNested2 {
+				nestedDiff, err := genDifference(value1.(map[string]interface{}), value2.(map[string]interface{}), indentLevel+1)
+				if err != nil {
+					return "", err
+				}
+				result.WriteString(fmt.Sprintf("%s    %s: %s\n", indent, key, nestedDiff))
+			} else if isNested1 && !isNested2 {
+				nestedDiff, err := genDifference(value1.(map[string]interface{}), map[string]interface{}{}, indentLevel+1)
+				if err != nil {
+					return "", err
+				}
+				result.WriteString(fmt.Sprintf("%s  - %s: %s\n", indent, key, nestedDiff))
+				result.WriteString(fmt.Sprintf("%s  + %s: %s\n", indent, key, formatValue(value2)))
+			} else if !isNested1 && isNested2 {
+				result.WriteString(fmt.Sprintf("%s  - %s: %s\n", indent, key, formatValue(value1)))
+				nestedDiff, err := genDifference(map[string]interface{}{}, value2.(map[string]interface{}), indentLevel+1)
+				if err != nil {
+					return "", err
+				}
+				result.WriteString(fmt.Sprintf("%s  + %s: %s\n", indent, key, nestedDiff))
+			} else {
+				if isEqual(value1, value2) {
+					result.WriteString(fmt.Sprintf("%s    %s: %s\n", indent, key, formatValue(value1)))
+				} else {
+					result.WriteString(fmt.Sprintf("%s  - %s: %s\n", indent, key, formatValue(value1)))
+					result.WriteString(fmt.Sprintf("%s  + %s: %s\n", indent, key, formatValue(value2)))
+				}
 			}
 		}
 	}
 
-	result.WriteString("}")
+	result.WriteString(fmt.Sprintf("%s}", indent))
 	return result.String(), nil
 }
 func getUniqueKeys(map1, map2 map[string]interface{}) []string {
@@ -136,6 +156,13 @@ func isNestedObject(value interface{}) bool {
 	}
 	_, ok := value.(map[string]interface{})
 	return ok
+}
+
+func formatValue(value interface{}) string {
+	if value == nil {
+		return "null"
+	}
+	return fmt.Sprintf("%v", value)
 }
 
 func isEqual(a, b interface{}) bool {
